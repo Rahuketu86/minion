@@ -5,4 +5,9 @@ d = { 'settings': { 'branch': 'main',
                 'doc_host': 'https://Rahuketu86.github.io',
                 'git_url': 'https://github.com/Rahuketu86/minion',
                 'lib_path': 'minion'},
-  'syms': {'minion.core': {'minion.core.foo': ('core.html#foo', 'minion/core.py')}}}
+  'syms': { 'minion.core': { 'minion.core.Value': ('core.html#value', 'minion/core.py'),
+                             'minion.core.Value.__add__': ('core.html#value.__add__', 'minion/core.py'),
+                             'minion.core.Value.__init__': ('core.html#value.__init__', 'minion/core.py'),
+                             'minion.core.Value.__mul__': ('core.html#value.__mul__', 'minion/core.py'),
+                             'minion.core.Value.__repr__': ('core.html#value.__repr__', 'minion/core.py'),
+                             'minion.core.foo': ('core.html#foo', 'minion/core.py')}}}
