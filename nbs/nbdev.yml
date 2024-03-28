@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "minion"
+  site-url: "https://Rahuketu86.github.io/minion"
+  description: "Micrograd replication with nbdev"
+  repo-branch: main
+  repo-url: "https://github.com/Rahuketu86/minion"
