@@ -10,4 +10,6 @@ d = { 'settings': { 'branch': 'main',
                              'minion.core.Value.__init__': ('core.html#value.__init__', 'minion/core.py'),
                              'minion.core.Value.__mul__': ('core.html#value.__mul__', 'minion/core.py'),
                              'minion.core.Value.__repr__': ('core.html#value.__repr__', 'minion/core.py'),
-                             'minion.core.foo': ('core.html#foo', 'minion/core.py')}}}
+                             'minion.core.foo': ('core.html#foo', 'minion/core.py')},
+            'minion.utils': { 'minion.utils.draw_dot': ('utils.html#draw_dot', 'minion/utils.py'),
+                              'minion.utils.trace': ('utils.html#trace', 'minion/utils.py')}}}

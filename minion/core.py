@@ -3,22 +3,34 @@
 # %% auto 0
 __all__ = ['Value', 'foo']
 
-# %% ../nbs/00_core.ipynb 19
+# %% ../nbs/00_core.ipynb 3
+import numpy as np
+import scipy as sp
+import matplotlib.pyplot as plt 
+
+
+# %% ../nbs/00_core.ipynb 21
 class Value:
-    '''Class to hold a scalar number in an object. Supports arthmetic operations like addition, multiplications etc...'''
-    def __init__(self, data) -> None:
+
+    '''Class to hold a scalar number in an object, references of input values/ computational graph for expression. Supports arthmetic operations like addition, multiplications etc...'''
+
+    def __init__(self, data, children=(), op=None,  label="") -> None:
         self.data = data
+        self._prev = set(children)
+        self._op = op
+        self.label = label
 
     def __repr__(self) -> str:
-        return f"Value(data={self.data})"
+        if self.label: return f"Value({self.label}|data={self.data})"
+        else: return f"Value(data={self.data})"
     
     def __add__(self, other):
         '''Protocol to add 2 value objects'''
-        return Value(self.data + other.data)
+        return Value(self.data + other.data, children=(self, other), op="+")
     
     def __mul__(self, other):
         '''Protocal to multiply 2 value objects'''
-        return Value(self.data*other.data)
+        return Value(self.data*other.data, children=(self, other), op="*")
 
-# %% ../nbs/00_core.ipynb 21
+# %% ../nbs/00_core.ipynb 24
 def foo(): pass
