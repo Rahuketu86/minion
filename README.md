@@ -17,7 +17,23 @@ pip install minion
 Fill me in please! Don’t forget code examples:
 
 ``` python
-1+1
+from minion.core import Value
+from minion.utils import draw_dot
 ```
 
-    2
+``` python
+a = Value(2.0, label="a")
+b = Value(-3.0, label="b")
+c = Value(10.0, label="c")
+
+d = a*b+c; d.label = "d"
+d
+```
+
+    Value(d|data=4.0)
+
+``` python
+draw_dot(d)
+```
+
+![](index_files/figure-commonmark/cell-4-output-1.svg)

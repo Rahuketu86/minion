@@ -31,7 +31,7 @@ def draw_dot(root):
     for n in nodes:
         # print(str(id(n)))
         uid = str(id(n))
-        dot.node(uid, label=f" {{ {n.label}|{n.data:.4f}  }}", shape='record') # For { in f-string use {{
+        dot.node(uid, label=f" {{ {n.label}|{n.data:.4f}| grad: {n.grad:.4f}  }}", shape='record') # For { in f-string use {{
         if n._op:
             dot.node(uid+n._op, n._op)
             dot.edge(uid+n._op, uid)
