@@ -7,6 +7,7 @@ __all__ = ['Value']
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
+import math
 
 # %% ../nbs/00_core.ipynb 22
 class Value:
@@ -43,5 +44,15 @@ class Value:
     def __floordiv__(self, other):
         '''Protocal to do floor divide of 2 value objects'''
         return Value(self.data//other.data, children=(self, other), op="//")
+
+    def tanh(self):
+        ''' Implementing tanh for a node
+            $$
+                tanh(x) = \frac{{e^{2x} - 1}}{{e^{2x} + 1}}.
+            $$
+        '''
+        x = self.data
+        t = (math.exp(2*x)-1)/ (math.exp(2*x)+1)
+        return Value(t, children=(self, ), op="tanh")
     
 
