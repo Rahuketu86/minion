@@ -18,6 +18,8 @@ class Value:
         self.data = data
         self._prev = set(children)
         self.grad = 0  # Grad is initialized to zero Why? It basically says when grad is zero there is no change in output w.r.t current input
+        # self.grad = lambda : None
+        self._backward = lambda: None
         self._op = op
         self.label = label
 
@@ -27,7 +29,15 @@ class Value:
     
     def __add__(self, other):
         '''Protocol to add 2 value objects'''
-        return Value(self.data + other.data, children=(self, other), op="+")
+        out = Value(self.data + other.data, children=(self, other), op="+")
+
+        # Code for chaining back propogation operation
+        def _backward():
+            '''Todo Job is to take out grad and propogate to self and other'''
+            self.grad = 1.0*out.grad
+            other.grad = 1.0*out.grad
+        out._backward = _backward
+        return out
     
     def __sub__(self, other):
         '''Protocol to substract 2 value objects'''
@@ -35,7 +45,13 @@ class Value:
     
     def __mul__(self, other):
         '''Protocal to multiply 2 value objects'''
-        return Value(self.data*other.data, children=(self, other), op="*")
+        out = Value(self.data*other.data, children=(self, other), op="*")
+        def _backward():
+            '''Todo Job is to take out grad and propogate to self and other'''
+            self.grad, other.grad = other.data*out.grad, self.data*out.grad
+        out._backward = _backward
+            
+        return out
     
     def __truediv__(self, other):
         '''Protocal to divide 2 value objects'''
@@ -53,6 +69,11 @@ class Value:
         '''
         x = self.data
         t = (math.exp(2*x)-1)/ (math.exp(2*x)+1)
-        return Value(t, children=(self, ), op="tanh")
+        out = Value(t, children=(self, ), op="tanh")
+        def _backward():
+            '''Todo Job is to take out grad and propogate to self and other'''
+            self.grad = (1- t**2)*out.grad
+        out._backward = _backward
+        return out
     
 
