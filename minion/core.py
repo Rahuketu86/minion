@@ -85,20 +85,35 @@ class Value:
         '''Protocal to do floor divide of 2 value objects'''
         return Value(self.data//other.data, children=(self, other), op="//")
 
-    def tanh(self):
-        ''' Implementing tanh for a node
-            $$
-                tanh(x) = \frac{{e^{2x} - 1}}{{e^{2x} + 1}}.
-            $$
+    def exp(self):
+        ''' Implementing exp(x) for a node
         '''
         x = self.data
-        t = (math.exp(2*x)-1)/ (math.exp(2*x)+1)
-        out = Value(t, children=(self, ), op="tanh")
+        t = math.exp(x)
+        out = Value(t, children=(self, ), op="e")
         def _backward():
-            '''Todo Job is to take out grad and propogate to self and other'''
-            self.grad = (1- t**2)*out.grad
+            self.grad += t*out.grad
         out._backward = _backward
         return out
+
+    def tanh(self):
+        '''Implementing tanh as derivation from exp'''
+        return ((self.exp())**2 -1)/((self.exp())**2 + 1)
+
+    # def tanh(self):
+    #     ''' Implementing tanh for a node
+    #         $$
+    #             tanh(x) = \frac{{e^{2x} - 1}}{{e^{2x} + 1}}.
+    #         $$
+    #     '''
+    #     x = self.data
+    #     t = (math.exp(2*x)-1)/ (math.exp(2*x)+1)
+    #     out = Value(t, children=(self, ), op="tanh")
+    #     def _backward():
+    #         '''Todo Job is to take out grad and propogate to self and other'''
+    #         self.grad += (1- t**2)*out.grad
+    #     out._backward = _backward
+    #     return out
 
     def backward(self):
         self.grad = 1.0
