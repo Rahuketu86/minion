@@ -96,6 +96,10 @@ class Value:
         out._backward = _backward
         return out
 
+    def sigmoid(self):
+        '''Implementing sigmoid as derivation from exp'''
+        return self.exp()/(1+self.exp())
+
     def tanh(self):
         '''Implementing tanh as derivation from exp'''
         return ((self.exp())**2 -1)/((self.exp())**2 + 1)
@@ -114,6 +118,17 @@ class Value:
     #         self.grad += (1- t**2)*out.grad
     #     out._backward = _backward
     #     return out
+
+    def relu(self):
+        x = self.data
+        t = x if x >0 else 0
+        out = Value(t, children=(self, ), op="relu")
+        def _backward():
+            if x > 0 : self.grad += out.grad
+            else: self.grad += 0
+        out._backward = _backward
+        return out
+    
 
     def backward(self):
         self.grad = 1.0
