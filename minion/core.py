@@ -18,7 +18,6 @@ class Value:
         self.data = data
         self._prev = set(children)
         self.grad = 0  # Grad is initialized to zero Why? It basically says when grad is zero there is no change in output w.r.t current input
-        # self.grad = lambda : None
         self._backward = lambda: None
         self._op = op
         self.label = label
@@ -29,33 +28,58 @@ class Value:
     
     def __add__(self, other):
         '''Protocol to add 2 value objects'''
+        if not isinstance(other, Value): other = Value(other)
         out = Value(self.data + other.data, children=(self, other), op="+")
 
         # Code for chaining back propogation operation
         def _backward():
             '''Todo Job is to take out grad and propogate to self and other'''
-            self.grad = 1.0*out.grad
-            other.grad = 1.0*out.grad
+            self.grad += 1.0*out.grad
+            other.grad += 1.0*out.grad
         out._backward = _backward
         return out
+
+    def __radd__(self, other):
+        return self + other
+
+    def __neg__(self):
+        return Value(-self.data, children=self._prev, op=self._op, label=self.label)
     
     def __sub__(self, other):
         '''Protocol to substract 2 value objects'''
-        return Value(self.data - other.data, children=(self, other), op="-")
+        return self + (-other)
     
     def __mul__(self, other):
         '''Protocal to multiply 2 value objects'''
+        if not isinstance(other, Value):
+            assert type(other) in [int, float]
+            other = Value(other)
         out = Value(self.data*other.data, children=(self, other), op="*")
         def _backward():
             '''Todo Job is to take out grad and propogate to self and other'''
-            self.grad, other.grad = other.data*out.grad, self.data*out.grad
+            self.grad += other.data*out.grad
+            other.grad += self.data*out.grad
         out._backward = _backward
-            
         return out
+
+    def __pow__(self, other):
+        '''Protocal to multiply 2 value objects'''
+        assert type(other) in [int, float]
+        x = self.data
+        out = Value(x**other, children=(self, Value(other)), op="**")
+        def _backward():
+            '''Todo Job is to take out grad and propogate to self and other'''
+            self.grad += other*(x**(other-1))*out.grad
+        out._backward = _backward
+        return out
+
+    def __rmul__(self, other):
+        return self*other
     
     def __truediv__(self, other):
         '''Protocal to divide 2 value objects'''
-        return Value(self.data/other.data, children=(self, other), op="/")
+        # return Value(self.data/other.data, children=(self, other), op="/")
+        return self*(other**(-1))
     
     def __floordiv__(self, other):
         '''Protocal to do floor divide of 2 value objects'''
