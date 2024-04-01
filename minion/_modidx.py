@@ -24,5 +24,6 @@ d = { 'settings': { 'branch': 'main',
                              'minion.core.Value.tanh': ('core.html#value.tanh', 'minion/core.py'),
                              'minion.core.backprop_r': ('core.html#backprop_r', 'minion/core.py'),
                              'minion.core.topo_sort': ('core.html#topo_sort', 'minion/core.py')},
+            'minion.nn': {},
             'minion.utils': { 'minion.utils.draw_dot': ('utils.html#draw_dot', 'minion/utils.py'),
                               'minion.utils.trace': ('utils.html#trace', 'minion/utils.py')}}}

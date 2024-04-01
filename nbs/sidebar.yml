@@ -4,3 +4,10 @@ website:
       - index.ipynb
       - 00_core.ipynb
       - 01_utils.ipynb
+      - 02_nn.ipynb
+      - cell-44-output-1.svg
+      - cell-45-output-1.svg
+      - cell-46-output-1.svg
+      - nbdev.yml
+      - sidebar.yml
+      - styles.css

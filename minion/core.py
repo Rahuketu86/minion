@@ -43,7 +43,8 @@ class Value:
         return self + other
 
     def __neg__(self):
-        return Value(-self.data, children=self._prev, op=self._op, label=self.label)
+        # return Value(-self.data, children=self._prev, op=self._op, label=self.label)
+        return -1*self
     
     def __sub__(self, other):
         '''Protocol to substract 2 value objects'''
@@ -66,7 +67,8 @@ class Value:
         '''Protocal to multiply 2 value objects'''
         assert type(other) in [int, float]
         x = self.data
-        out = Value(x**other, children=(self, Value(other)), op="**")
+        # out = Value(x**other, children=(self, Value(other)), op="**")
+        out = Value(x**other,children=(self,), op=f"**{other}")
         def _backward():
             '''Todo Job is to take out grad and propogate to self and other'''
             self.grad += other*(x**(other-1))*out.grad
