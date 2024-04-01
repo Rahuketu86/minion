@@ -49,6 +49,9 @@ class Value:
     def __sub__(self, other):
         '''Protocol to substract 2 value objects'''
         return self + (-other)
+
+    def __rsub__(self, other):
+        return -self + other
     
     def __mul__(self, other):
         '''Protocal to multiply 2 value objects'''

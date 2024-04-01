@@ -14,8 +14,12 @@ from typing import List
 
 # %% ../nbs/02_nn.ipynb 6
 class Module(object):
-    def __init__(self) -> None:
-        pass
+    # def __init__(self) -> None:
+    #     pass
+
+    def zero_grad(self):
+        for p in self.parameters():
+            p.grad = 0.0
 
     def num_params(self):
         return len(self.parameters())
@@ -29,8 +33,10 @@ class Module(object):
 class Neuron(Module):
     def __init__(self, nin) -> None:
         super().__init__()
-        self.weights = [Value(random.random()) for _ in range(nin)]
-        self.bias = Value(random.random())
+        # self.weights = [Value(random.random()) for _ in range(nin)]
+        # self.bias = Value(random.random())
+        self.weights = [Value(random.uniform(-1,1)) for _ in range(nin)]
+        self.bias = Value(random.uniform(-1,1))
 
     def __call__(self, xs) -> Value:
         out = sum((w*x for w,x in zip(self.weights, xs)), self.bias)
