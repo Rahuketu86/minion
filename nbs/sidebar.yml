@@ -7,9 +7,3 @@ website:
       - 02_nn.ipynb
       - 03_makemore.bigram.ipynb
       - 04_makemore.mlp.ipynb
-      - cell-44-output-1.svg
-      - cell-45-output-1.svg
-      - cell-46-output-1.svg
-      - nbdev.yml
-      - sidebar.yml
-      - styles.css
