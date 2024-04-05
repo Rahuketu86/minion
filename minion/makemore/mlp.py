@@ -53,12 +53,12 @@ class Model(object):
     
 
 # %% ../../nbs/04_makemore.mlp.ipynb 70
-def nll(input,  #Takes logits
+def nll(inputs,  #Takes logits
         target  #Takes y
         ): 
-    counts = logits.exp()
+    counts = inputs.exp()
     probs = counts/ counts.sum(dim=1, keepdim=True)
-    loss = -probs[torch.arange(len(Y)), Y].log().mean()
+    loss = -probs[torch.arange(len(target)), target].log().mean()
     return loss
 
 
