@@ -25,7 +25,7 @@ def build_XY(words, s2i, block_size, str_term=".", verbose=False):
             context = context[1:] + [s2i[ch]]
     return torch.tensor(X), torch.tensor(Y)
 
-# %% ../../nbs/04_makemore.mlp.ipynb 67
+# %% ../../nbs/04_makemore.mlp.ipynb 68
 class Model(object):
     def __init__(self, s2i, blck_sz=3, emb_sz=2, hidden_units=100, g=torch.Generator().manual_seed(2147483647)) -> None:
         self.C = torch.randn((len(s2i),emb_sz), generator=g, requires_grad=True)
@@ -45,6 +45,9 @@ class Model(object):
     
     def parameters(self):
         return [self.C, self.W1, self.b1, self.W2, self.b2]
+
+    def num_params(self):
+        return sum(p.nelement() for p in self.parameters())
     
     def zero_grad(self):
         for p in self.parameters(): 
@@ -52,18 +55,19 @@ class Model(object):
             p.grad = None
     
 
-# %% ../../nbs/04_makemore.mlp.ipynb 70
+# %% ../../nbs/04_makemore.mlp.ipynb 71
 def nll(inputs,  #Takes logits
         target  #Takes y
         ): 
-    counts = inputs.exp()
+    # counts = inputs.exp()
+    c  = -torch.max(inputs)
+    counts = (inputs+c).exp()
     probs = counts/ counts.sum(dim=1, keepdim=True)
     loss = -probs[torch.arange(len(target)), target].log().mean()
     return loss
 
 
-
-# %% ../../nbs/04_makemore.mlp.ipynb 76
+# %% ../../nbs/04_makemore.mlp.ipynb 77
 def plot_embeddings(model, s2i):
     i2s = itos(s2i)
     plt.figure(figsize=(8,8))
@@ -73,7 +77,7 @@ def plot_embeddings(model, s2i):
         plt.text(model.C[i,0].item(), model.C[i,1].item(), i2s[i], ha='center', va='center', color='white')
     plt.grid()
 
-# %% ../../nbs/04_makemore.mlp.ipynb 79
+# %% ../../nbs/04_makemore.mlp.ipynb 80
 def train(model, X, Y, lr=0.1, epochs=1000, verbose=False, batch_sz=None, loss_fn=F.cross_entropy, tracker = None):
     for i in range(epochs):
     
@@ -112,7 +116,7 @@ def train(model, X, Y, lr=0.1, epochs=1000, verbose=False, batch_sz=None, loss_f
     return model
 
 
-# %% ../../nbs/04_makemore.mlp.ipynb 101
+# %% ../../nbs/04_makemore.mlp.ipynb 103
 def gen_word_nn(model, i2s, n_samples=20, g=torch.Generator().manual_seed(2147483647)):
     gen_words = []
     for i in range(n_samples):
