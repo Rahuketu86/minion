@@ -84,8 +84,8 @@ def plot_embeddings(model, s2i, emb_model=None, cluster_model = None):
     plt.figure(figsize=(8,8))
     
     c = model.C.detach().numpy()
-    if emb_model:
-        c = emb_model.fit_transform(a)
+    if not emb_model: a = c
+    else: a = emb_model.fit_transform(c)
     if not cluster_model: plt.scatter(a[:,0], a[:,1], s=200)
     else: 
         label = cluster_model.fit_predict(c)
@@ -95,7 +95,7 @@ def plot_embeddings(model, s2i, emb_model=None, cluster_model = None):
         plt.text(a[i,0], a[i,1], i2s[i], ha='center', va='center', color='white')
     plt.grid()
 
-# %% ../../nbs/04_makemore.mlp.ipynb 88
+# %% ../../nbs/04_makemore.mlp.ipynb 87
 def train(model, X, Y, lr=0.1, epochs=1000, verbose=False, batch_sz=None, loss_fn=F.cross_entropy, tracker = None):
     
 
@@ -137,7 +137,7 @@ def train(model, X, Y, lr=0.1, epochs=1000, verbose=False, batch_sz=None, loss_f
     return model
 
 
-# %% ../../nbs/04_makemore.mlp.ipynb 112
+# %% ../../nbs/04_makemore.mlp.ipynb 111
 def gen_word_nn(model, i2s, n_samples=20, g=torch.Generator().manual_seed(2147483647), logit2prob=F.softmax):
     gen_words = []
     for i in range(n_samples):
@@ -160,7 +160,7 @@ def gen_word_nn(model, i2s, n_samples=20, g=torch.Generator().manual_seed(214748
         gen_words.append(gen_word)
     return gen_words
 
-# %% ../../nbs/04_makemore.mlp.ipynb 123
+# %% ../../nbs/04_makemore.mlp.ipynb 122
 def lr_scheduler(low=-3, upper=0, steps=1000):
     yield from 10**torch.linspace(low, upper, steps)
 
