@@ -10,3 +10,4 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 from .bigram import stoi, itos
+from .mlp import build_XY
