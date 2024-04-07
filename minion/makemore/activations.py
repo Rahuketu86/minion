@@ -10,4 +10,6 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 from .bigram import stoi, itos
-from .mlp import build_XY
+from .mlp import build_XY, Model, plot_embeddings, train, gen_word_nn
+from sklearn.cluster import KMeans
+from sklearn.manifold import TSNE
