@@ -28,12 +28,12 @@ def build_XY(words, s2i, block_size, str_term=".", verbose=False):
 
 # %% ../../nbs/04_makemore.mlp.ipynb 68
 class Model(object):
-    def __init__(self, s2i, blck_sz=3, emb_sz=2, hidden_units=100, g=torch.Generator().manual_seed(2147483647)) -> None:
-        self.C = torch.randn((len(s2i),emb_sz), generator=g, requires_grad=True)
+    def __init__(self, vocab_sz, blck_sz=3, emb_sz=2, hidden_units=100, g=torch.Generator().manual_seed(2147483647)) -> None:
+        self.C = torch.randn((vocab_sz,emb_sz), generator=g, requires_grad=True)
         self.W1 = torch.randn((blck_sz*emb_sz, hidden_units), generator=g, requires_grad=True)
         self.b1 = torch.randn(hidden_units, generator=g, requires_grad=True)
-        self.W2 = torch.randn((hidden_units, len(s2i)), generator=g, requires_grad=True)
-        self.b2 = torch.randn(len(s2i), generator=g, requires_grad=True)
+        self.W2 = torch.randn((hidden_units, vocab_sz), generator=g, requires_grad=True)
+        self.b2 = torch.randn(vocab_sz, generator=g, requires_grad=True)
         self.blck_sz = blck_sz
         self.emb_sz = emb_sz
         self.hidden_units = hidden_units
