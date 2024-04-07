@@ -11,6 +11,8 @@ import torch
 import torch.nn.functional as F
 from .bigram import stoi, itos
 import math
+from sklearn.manifold import TSNE
+from sklearn.cluster import KMeans
 
 # %% ../../nbs/04_makemore.mlp.ipynb 9
 def build_XY(words, s2i, block_size, str_term=".", verbose=False):
@@ -76,17 +78,24 @@ def nll(inputs,  #Takes logits
     return loss
 
 
-# %% ../../nbs/04_makemore.mlp.ipynb 81
-def plot_embeddings(model, s2i):
+# %% ../../nbs/04_makemore.mlp.ipynb 83
+def plot_embeddings(model, s2i, emb_model=None, cluster_model = None):
     i2s = itos(s2i)
     plt.figure(figsize=(8,8))
-    plt.scatter(model.C[:,0].data, model.C[:,1].data, s=200)
-    for i in range(model.C.shape[0]):
+    
+    c = model.C.detach().numpy()
+    if emb_model:
+        c = emb_model.fit_transform(a)
+    if not cluster_model: plt.scatter(a[:,0], a[:,1], s=200)
+    else: 
+        label = cluster_model.fit_predict(c)
+        plt.scatter(a[:,0], a[:,1], s=200, c=label)
+    for i in range(a.shape[0]):
         # plt.text()
-        plt.text(model.C[i,0].item(), model.C[i,1].item(), i2s[i], ha='center', va='center', color='white')
+        plt.text(a[i,0], a[i,1], i2s[i], ha='center', va='center', color='white')
     plt.grid()
 
-# %% ../../nbs/04_makemore.mlp.ipynb 84
+# %% ../../nbs/04_makemore.mlp.ipynb 88
 def train(model, X, Y, lr=0.1, epochs=1000, verbose=False, batch_sz=None, loss_fn=F.cross_entropy, tracker = None):
     
 
@@ -128,7 +137,7 @@ def train(model, X, Y, lr=0.1, epochs=1000, verbose=False, batch_sz=None, loss_f
     return model
 
 
-# %% ../../nbs/04_makemore.mlp.ipynb 108
+# %% ../../nbs/04_makemore.mlp.ipynb 112
 def gen_word_nn(model, i2s, n_samples=20, g=torch.Generator().manual_seed(2147483647), logit2prob=F.softmax):
     gen_words = []
     for i in range(n_samples):
@@ -151,7 +160,7 @@ def gen_word_nn(model, i2s, n_samples=20, g=torch.Generator().manual_seed(214748
         gen_words.append(gen_word)
     return gen_words
 
-# %% ../../nbs/04_makemore.mlp.ipynb 119
+# %% ../../nbs/04_makemore.mlp.ipynb 123
 def lr_scheduler(low=-3, upper=0, steps=1000):
     yield from 10**torch.linspace(low, upper, steps)
 
