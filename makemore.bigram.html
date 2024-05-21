@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.554">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Implementation of bigram model using Pytorch">
+
+<title>minion - bigrams</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="minion - bigrams">
+<meta property="og:description" content="Implementation of bigram model using Pytorch">
+<meta property="og:site_name" content="minion">
+<meta name="twitter:title" content="minion - bigrams">
+<meta name="twitter:description" content="Implementation of bigram model using Pytorch">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">minion</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./makemore.bigram.html">bigrams</a></li></ol></nav>
+        <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">minion</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./utils.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">utils</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./nn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">nn</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./makemore.bigram.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">bigrams</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./makemore.mlp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">mlp</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./makemore.activations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">activations</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#read-and-review-dataset" id="toc-read-and-review-dataset" class="nav-link active" data-scroll-target="#read-and-review-dataset">Read and Review Dataset</a></li>
+  <li><a href="#bigram-frequency-map" id="toc-bigram-frequency-map" class="nav-link" data-scroll-target="#bigram-frequency-map">Bigram Frequency Map</a>
+  <ul class="collapse">
+  <li><a href="#stoi" id="toc-stoi" class="nav-link" data-scroll-target="#stoi">stoi</a></li>
+  <li><a href="#itos" id="toc-itos" class="nav-link" data-scroll-target="#itos">itos</a></li>
+  </ul></li>
+  <li><a href="#sampling-from-the-model" id="toc-sampling-from-the-model" class="nav-link" data-scroll-target="#sampling-from-the-model">Sampling from the model</a>
+  <ul class="collapse">
+  <li><a href="#calculating-probabilities-of-starting-word" id="toc-calculating-probabilities-of-starting-word" class="nav-link" data-scroll-target="#calculating-probabilities-of-starting-word">Calculating Probabilities of starting word</a></li>
+  <li><a href="#measuring-bigram-performance" id="toc-measuring-bigram-performance" class="nav-link" data-scroll-target="#measuring-bigram-performance">Measuring bigram performance</a></li>
+  </ul></li>
+  <li><a href="#model-smoothing-with-fake-count" id="toc-model-smoothing-with-fake-count" class="nav-link" data-scroll-target="#model-smoothing-with-fake-count">Model Smoothing with fake count</a></li>
+  <li><a href="#bigram-modelling-using-a-neural-network-framework" id="toc-bigram-modelling-using-a-neural-network-framework" class="nav-link" data-scroll-target="#bigram-modelling-using-a-neural-network-framework">Bigram modelling using a Neural Network Framework</a>
+  <ul class="collapse">
+  <li><a href="#bigram-training-set" id="toc-bigram-training-set" class="nav-link" data-scroll-target="#bigram-training-set">Bigram Training Set</a></li>
+  <li><a href="#complete-neural-network-setup" id="toc-complete-neural-network-setup" class="nav-link" data-scroll-target="#complete-neural-network-setup">Complete Neural Network setup</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/Rahuketu86/minion/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">bigrams</h1>
+</div>
+
+<div>
+  <div class="description">
+    Implementation of bigram model using Pytorch
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<section id="read-and-review-dataset" class="level2">
+<h2 class="anchored" data-anchor-id="read-and-review-dataset">Read and Review Dataset</h2>
+<div id="cell-4" class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>words <span class="op">=</span> <span class="bu">open</span>(<span class="st">"../data/names.txt"</span>, <span class="st">'r'</span>).read().split()<span class="op">;</span> words[:<span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>['emma', 'olivia', 'ava', 'isabella', 'sophia']</code></pre>
+</div>
+</div>
+<div id="cell-5" class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">max</span>(<span class="bu">len</span>(w) <span class="cf">for</span> w <span class="kw">in</span> words), <span class="bu">min</span>(<span class="bu">len</span>(w) <span class="cf">for</span> w <span class="kw">in</span> words), <span class="bu">len</span>(words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>(15, 2, 32033)</code></pre>
+</div>
+</div>
+<div id="cell-6" class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>plt.hist([<span class="bu">len</span>(w) <span class="cf">for</span> w <span class="kw">in</span> words], bins<span class="op">=</span><span class="dv">15</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>(array([6.500e+01, 5.750e+02, 2.983e+03, 7.133e+03, 9.657e+03, 6.819e+03,
+        3.108e+03, 0.000e+00, 1.118e+03, 3.800e+02, 1.280e+02, 2.900e+01,
+        3.000e+01, 6.000e+00, 2.000e+00]),
+ array([ 2.        ,  2.86666667,  3.73333333,  4.6       ,  5.46666667,
+         6.33333333,  7.2       ,  8.06666667,  8.93333333,  9.8       ,
+        10.66666667, 11.53333333, 12.4       , 13.26666667, 14.13333333,
+        15.        ]),
+ &lt;BarContainer object of 15 artists&gt;)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_makemore.bigram_files/figure-html/cell-5-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Things to note :-</p>
+<ul>
+<li>We will do character level language model. A character level language model basically provides us with a prediction of next character given sequence of characters</li>
+<li>Even within a single word like <code>isabella</code> there is a lot of information in terms of statistical structure of characters in a word
+<ul>
+<li><code>i</code> is the beginning characters</li>
+<li><code>s</code> follows <code>i</code></li>
+<li><code>a</code> follows <code>is</code> or <code>isabell</code></li>
+<li>sequences of character like <code>isabella</code> terminates at <code>a</code></li>
+</ul></li>
+<li>A bigram model is a weak language model in which we
+<ul>
+<li>Take 2 characters at a time</li>
+<li>Try to model / predict next character n given a known single character k
+<ul>
+<li>Prob(n|k)</li>
+<li>In terms of intuition , given <code>r</code> what character are likely to follow <code>r</code></li>
+<li>We forget/ ignore the fact that we have a lot more information about the structure of characters from the word rather than just predicting next character based on previous character</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section id="bigram-frequency-map" class="level2">
+<h2 class="anchored" data-anchor-id="bigram-frequency-map">Bigram Frequency Map</h2>
+<div id="cell-9" class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>bigrams <span class="op">=</span> {}</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> w <span class="kw">in</span> words:</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    chrs <span class="op">=</span> [<span class="st">'&lt;S&gt;'</span>]</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    chrs.extend(w)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    chrs.append(<span class="st">'&lt;E&gt;'</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> ch1, ch2 <span class="kw">in</span> <span class="bu">zip</span>(chrs, chrs[<span class="dv">1</span>:]):</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        <span class="co"># print(ch1, ch2, w)</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        bigrams[(ch1, ch2)] <span class="op">=</span> bigrams.get((ch1, ch2),<span class="dv">0</span>) <span class="op">+</span><span class="dv">1</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="bu">sorted</span>(bigrams.items(), key <span class="op">=</span> <span class="kw">lambda</span> kv : <span class="op">-</span>kv[<span class="dv">1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>[(('n', '&lt;E&gt;'), 6763),
+ (('a', '&lt;E&gt;'), 6640),
+ (('a', 'n'), 5438),
+ (('&lt;S&gt;', 'a'), 4410),
+ (('e', '&lt;E&gt;'), 3983),
+ (('a', 'r'), 3264),
+ (('e', 'l'), 3248),
+ (('r', 'i'), 3033),
+ (('n', 'a'), 2977),
+ (('&lt;S&gt;', 'k'), 2963),
+ (('l', 'e'), 2921),
+ (('e', 'n'), 2675),
+ (('l', 'a'), 2623),
+ (('m', 'a'), 2590),
+ (('&lt;S&gt;', 'm'), 2538),
+ (('a', 'l'), 2528),
+ (('i', '&lt;E&gt;'), 2489),
+ (('l', 'i'), 2480),
+ (('i', 'a'), 2445),
+ (('&lt;S&gt;', 'j'), 2422),
+ (('o', 'n'), 2411),
+ (('h', '&lt;E&gt;'), 2409),
+ (('r', 'a'), 2356),
+ (('a', 'h'), 2332),
+ (('h', 'a'), 2244),
+ (('y', 'a'), 2143),
+ (('i', 'n'), 2126),
+ (('&lt;S&gt;', 's'), 2055),
+ (('a', 'y'), 2050),
+ (('y', '&lt;E&gt;'), 2007),
+ (('e', 'r'), 1958),
+ (('n', 'n'), 1906),
+ (('y', 'n'), 1826),
+ (('k', 'a'), 1731),
+ (('n', 'i'), 1725),
+ (('r', 'e'), 1697),
+ (('&lt;S&gt;', 'd'), 1690),
+ (('i', 'e'), 1653),
+ (('a', 'i'), 1650),
+ (('&lt;S&gt;', 'r'), 1639),
+ (('a', 'm'), 1634),
+ (('l', 'y'), 1588),
+ (('&lt;S&gt;', 'l'), 1572),
+ (('&lt;S&gt;', 'c'), 1542),
+ (('&lt;S&gt;', 'e'), 1531),
+ (('j', 'a'), 1473),
+ (('r', '&lt;E&gt;'), 1377),
+ (('n', 'e'), 1359),
+ (('l', 'l'), 1345),
+ (('i', 'l'), 1345),
+ (('i', 's'), 1316),
+ (('l', '&lt;E&gt;'), 1314),
+ (('&lt;S&gt;', 't'), 1308),
+ (('&lt;S&gt;', 'b'), 1306),
+ (('d', 'a'), 1303),
+ (('s', 'h'), 1285),
+ (('d', 'e'), 1283),
+ (('e', 'e'), 1271),
+ (('m', 'i'), 1256),
+ (('s', 'a'), 1201),
+ (('s', '&lt;E&gt;'), 1169),
+ (('&lt;S&gt;', 'n'), 1146),
+ (('a', 's'), 1118),
+ (('y', 'l'), 1104),
+ (('e', 'y'), 1070),
+ (('o', 'r'), 1059),
+ (('a', 'd'), 1042),
+ (('t', 'a'), 1027),
+ (('&lt;S&gt;', 'z'), 929),
+ (('v', 'i'), 911),
+ (('k', 'e'), 895),
+ (('s', 'e'), 884),
+ (('&lt;S&gt;', 'h'), 874),
+ (('r', 'o'), 869),
+ (('e', 's'), 861),
+ (('z', 'a'), 860),
+ (('o', '&lt;E&gt;'), 855),
+ (('i', 'r'), 849),
+ (('b', 'r'), 842),
+ (('a', 'v'), 834),
+ (('m', 'e'), 818),
+ (('e', 'i'), 818),
+ (('c', 'a'), 815),
+ (('i', 'y'), 779),
+ (('r', 'y'), 773),
+ (('e', 'm'), 769),
+ (('s', 't'), 765),
+ (('h', 'i'), 729),
+ (('t', 'e'), 716),
+ (('n', 'd'), 704),
+ (('l', 'o'), 692),
+ (('a', 'e'), 692),
+ (('a', 't'), 687),
+ (('s', 'i'), 684),
+ (('e', 'a'), 679),
+ (('d', 'i'), 674),
+ (('h', 'e'), 674),
+ (('&lt;S&gt;', 'g'), 669),
+ (('t', 'o'), 667),
+ (('c', 'h'), 664),
+ (('b', 'e'), 655),
+ (('t', 'h'), 647),
+ (('v', 'a'), 642),
+ (('o', 'l'), 619),
+ (('&lt;S&gt;', 'i'), 591),
+ (('i', 'o'), 588),
+ (('e', 't'), 580),
+ (('v', 'e'), 568),
+ (('a', 'k'), 568),
+ (('a', 'a'), 556),
+ (('c', 'e'), 551),
+ (('a', 'b'), 541),
+ (('i', 't'), 541),
+ (('&lt;S&gt;', 'y'), 535),
+ (('t', 'i'), 532),
+ (('s', 'o'), 531),
+ (('m', '&lt;E&gt;'), 516),
+ (('d', '&lt;E&gt;'), 516),
+ (('&lt;S&gt;', 'p'), 515),
+ (('i', 'c'), 509),
+ (('k', 'i'), 509),
+ (('o', 's'), 504),
+ (('n', 'o'), 496),
+ (('t', '&lt;E&gt;'), 483),
+ (('j', 'o'), 479),
+ (('u', 's'), 474),
+ (('a', 'c'), 470),
+ (('n', 'y'), 465),
+ (('e', 'v'), 463),
+ (('s', 's'), 461),
+ (('m', 'o'), 452),
+ (('i', 'k'), 445),
+ (('n', 't'), 443),
+ (('i', 'd'), 440),
+ (('j', 'e'), 440),
+ (('a', 'z'), 435),
+ (('i', 'g'), 428),
+ (('i', 'm'), 427),
+ (('r', 'r'), 425),
+ (('d', 'r'), 424),
+ (('&lt;S&gt;', 'f'), 417),
+ (('u', 'r'), 414),
+ (('r', 'l'), 413),
+ (('y', 's'), 401),
+ (('&lt;S&gt;', 'o'), 394),
+ (('e', 'd'), 384),
+ (('a', 'u'), 381),
+ (('c', 'o'), 380),
+ (('k', 'y'), 379),
+ (('d', 'o'), 378),
+ (('&lt;S&gt;', 'v'), 376),
+ (('t', 't'), 374),
+ (('z', 'e'), 373),
+ (('z', 'i'), 364),
+ (('k', '&lt;E&gt;'), 363),
+ (('g', 'h'), 360),
+ (('t', 'r'), 352),
+ (('k', 'o'), 344),
+ (('t', 'y'), 341),
+ (('g', 'e'), 334),
+ (('g', 'a'), 330),
+ (('l', 'u'), 324),
+ (('b', 'a'), 321),
+ (('d', 'y'), 317),
+ (('c', 'k'), 316),
+ (('&lt;S&gt;', 'w'), 307),
+ (('k', 'h'), 307),
+ (('u', 'l'), 301),
+ (('y', 'e'), 301),
+ (('y', 'r'), 291),
+ (('m', 'y'), 287),
+ (('h', 'o'), 287),
+ (('w', 'a'), 280),
+ (('s', 'l'), 279),
+ (('n', 's'), 278),
+ (('i', 'z'), 277),
+ (('u', 'n'), 275),
+ (('o', 'u'), 275),
+ (('n', 'g'), 273),
+ (('y', 'd'), 272),
+ (('c', 'i'), 271),
+ (('y', 'o'), 271),
+ (('i', 'v'), 269),
+ (('e', 'o'), 269),
+ (('o', 'm'), 261),
+ (('r', 'u'), 252),
+ (('f', 'a'), 242),
+ (('b', 'i'), 217),
+ (('s', 'y'), 215),
+ (('n', 'c'), 213),
+ (('h', 'y'), 213),
+ (('p', 'a'), 209),
+ (('r', 't'), 208),
+ (('q', 'u'), 206),
+ (('p', 'h'), 204),
+ (('h', 'r'), 204),
+ (('j', 'u'), 202),
+ (('g', 'r'), 201),
+ (('p', 'e'), 197),
+ (('n', 'l'), 195),
+ (('y', 'i'), 192),
+ (('g', 'i'), 190),
+ (('o', 'd'), 190),
+ (('r', 's'), 190),
+ (('r', 'd'), 187),
+ (('h', 'l'), 185),
+ (('s', 'u'), 185),
+ (('a', 'x'), 182),
+ (('e', 'z'), 181),
+ (('e', 'k'), 178),
+ (('o', 'v'), 176),
+ (('a', 'j'), 175),
+ (('o', 'h'), 171),
+ (('u', 'e'), 169),
+ (('m', 'm'), 168),
+ (('a', 'g'), 168),
+ (('h', 'u'), 166),
+ (('x', '&lt;E&gt;'), 164),
+ (('u', 'a'), 163),
+ (('r', 'm'), 162),
+ (('a', 'w'), 161),
+ (('f', 'i'), 160),
+ (('z', '&lt;E&gt;'), 160),
+ (('u', '&lt;E&gt;'), 155),
+ (('u', 'm'), 154),
+ (('e', 'c'), 153),
+ (('v', 'o'), 153),
+ (('e', 'h'), 152),
+ (('p', 'r'), 151),
+ (('d', 'd'), 149),
+ (('o', 'a'), 149),
+ (('w', 'e'), 149),
+ (('w', 'i'), 148),
+ (('y', 'm'), 148),
+ (('z', 'y'), 147),
+ (('n', 'z'), 145),
+ (('y', 'u'), 141),
+ (('r', 'n'), 140),
+ (('o', 'b'), 140),
+ (('k', 'l'), 139),
+ (('m', 'u'), 139),
+ (('l', 'd'), 138),
+ (('h', 'n'), 138),
+ (('u', 'd'), 136),
+ (('&lt;S&gt;', 'x'), 134),
+ (('t', 'l'), 134),
+ (('a', 'f'), 134),
+ (('o', 'e'), 132),
+ (('e', 'x'), 132),
+ (('e', 'g'), 125),
+ (('f', 'e'), 123),
+ (('z', 'l'), 123),
+ (('u', 'i'), 121),
+ (('v', 'y'), 121),
+ (('e', 'b'), 121),
+ (('r', 'h'), 121),
+ (('j', 'i'), 119),
+ (('o', 't'), 118),
+ (('d', 'h'), 118),
+ (('h', 'm'), 117),
+ (('c', 'l'), 116),
+ (('o', 'o'), 115),
+ (('y', 'c'), 115),
+ (('o', 'w'), 114),
+ (('o', 'c'), 114),
+ (('f', 'r'), 114),
+ (('b', '&lt;E&gt;'), 114),
+ (('m', 'b'), 112),
+ (('z', 'o'), 110),
+ (('i', 'b'), 110),
+ (('i', 'u'), 109),
+ (('k', 'r'), 109),
+ (('g', '&lt;E&gt;'), 108),
+ (('y', 'v'), 106),
+ (('t', 'z'), 105),
+ (('b', 'o'), 105),
+ (('c', 'y'), 104),
+ (('y', 't'), 104),
+ (('u', 'b'), 103),
+ (('u', 'c'), 103),
+ (('x', 'a'), 103),
+ (('b', 'l'), 103),
+ (('o', 'y'), 103),
+ (('x', 'i'), 102),
+ (('i', 'f'), 101),
+ (('r', 'c'), 99),
+ (('c', '&lt;E&gt;'), 97),
+ (('m', 'r'), 97),
+ (('n', 'u'), 96),
+ (('o', 'p'), 95),
+ (('i', 'h'), 95),
+ (('k', 's'), 95),
+ (('l', 's'), 94),
+ (('u', 'k'), 93),
+ (('&lt;S&gt;', 'q'), 92),
+ (('d', 'u'), 92),
+ (('s', 'm'), 90),
+ (('r', 'k'), 90),
+ (('i', 'x'), 89),
+ (('v', '&lt;E&gt;'), 88),
+ (('y', 'k'), 86),
+ (('u', 'w'), 86),
+ (('g', 'u'), 85),
+ (('b', 'y'), 83),
+ (('e', 'p'), 83),
+ (('g', 'o'), 83),
+ (('s', 'k'), 82),
+ (('u', 't'), 82),
+ (('a', 'p'), 82),
+ (('e', 'f'), 82),
+ (('i', 'i'), 82),
+ (('r', 'v'), 80),
+ (('f', '&lt;E&gt;'), 80),
+ (('t', 'u'), 78),
+ (('y', 'z'), 78),
+ (('&lt;S&gt;', 'u'), 78),
+ (('l', 't'), 77),
+ (('r', 'g'), 76),
+ (('c', 'r'), 76),
+ (('i', 'j'), 76),
+ (('w', 'y'), 73),
+ (('z', 'u'), 73),
+ (('l', 'v'), 72),
+ (('h', 't'), 71),
+ (('j', '&lt;E&gt;'), 71),
+ (('x', 't'), 70),
+ (('o', 'i'), 69),
+ (('e', 'u'), 69),
+ (('o', 'k'), 68),
+ (('b', 'd'), 65),
+ (('a', 'o'), 63),
+ (('p', 'i'), 61),
+ (('s', 'c'), 60),
+ (('d', 'l'), 60),
+ (('l', 'm'), 60),
+ (('a', 'q'), 60),
+ (('f', 'o'), 60),
+ (('p', 'o'), 59),
+ (('n', 'k'), 58),
+ (('w', 'n'), 58),
+ (('u', 'h'), 58),
+ (('e', 'j'), 55),
+ (('n', 'v'), 55),
+ (('s', 'r'), 55),
+ (('o', 'z'), 54),
+ (('i', 'p'), 53),
+ (('l', 'b'), 52),
+ (('i', 'q'), 52),
+ (('w', '&lt;E&gt;'), 51),
+ (('m', 'c'), 51),
+ (('s', 'p'), 51),
+ (('e', 'w'), 50),
+ (('k', 'u'), 50),
+ (('v', 'r'), 48),
+ (('u', 'g'), 47),
+ (('o', 'x'), 45),
+ (('u', 'z'), 45),
+ (('z', 'z'), 45),
+ (('j', 'h'), 45),
+ (('b', 'u'), 45),
+ (('o', 'g'), 44),
+ (('n', 'r'), 44),
+ (('f', 'f'), 44),
+ (('n', 'j'), 44),
+ (('z', 'h'), 43),
+ (('c', 'c'), 42),
+ (('r', 'b'), 41),
+ (('x', 'o'), 41),
+ (('b', 'h'), 41),
+ (('p', 'p'), 39),
+ (('x', 'l'), 39),
+ (('h', 'v'), 39),
+ (('b', 'b'), 38),
+ (('m', 'p'), 38),
+ (('x', 'x'), 38),
+ (('u', 'v'), 37),
+ (('x', 'e'), 36),
+ (('w', 'o'), 36),
+ (('c', 't'), 35),
+ (('z', 'm'), 35),
+ (('t', 's'), 35),
+ (('m', 's'), 35),
+ (('c', 'u'), 35),
+ (('o', 'f'), 34),
+ (('u', 'x'), 34),
+ (('k', 'w'), 34),
+ (('p', '&lt;E&gt;'), 33),
+ (('g', 'l'), 32),
+ (('z', 'r'), 32),
+ (('d', 'n'), 31),
+ (('g', 't'), 31),
+ (('g', 'y'), 31),
+ (('h', 's'), 31),
+ (('x', 's'), 31),
+ (('g', 's'), 30),
+ (('x', 'y'), 30),
+ (('y', 'g'), 30),
+ (('d', 'm'), 30),
+ (('d', 's'), 29),
+ (('h', 'k'), 29),
+ (('y', 'x'), 28),
+ (('q', '&lt;E&gt;'), 28),
+ (('g', 'n'), 27),
+ (('y', 'b'), 27),
+ (('g', 'w'), 26),
+ (('n', 'h'), 26),
+ (('k', 'n'), 26),
+ (('g', 'g'), 25),
+ (('d', 'g'), 25),
+ (('l', 'c'), 25),
+ (('r', 'j'), 25),
+ (('w', 'u'), 25),
+ (('l', 'k'), 24),
+ (('m', 'd'), 24),
+ (('s', 'w'), 24),
+ (('s', 'n'), 24),
+ (('h', 'd'), 24),
+ (('w', 'h'), 23),
+ (('y', 'j'), 23),
+ (('y', 'y'), 23),
+ (('r', 'z'), 23),
+ (('d', 'w'), 23),
+ (('w', 'r'), 22),
+ (('t', 'n'), 22),
+ (('l', 'f'), 22),
+ (('y', 'h'), 22),
+ (('r', 'w'), 21),
+ (('s', 'b'), 21),
+ (('m', 'n'), 20),
+ (('f', 'l'), 20),
+ (('w', 's'), 20),
+ (('k', 'k'), 20),
+ (('h', 'z'), 20),
+ (('g', 'd'), 19),
+ (('l', 'h'), 19),
+ (('n', 'm'), 19),
+ (('x', 'z'), 19),
+ (('u', 'f'), 19),
+ (('f', 't'), 18),
+ (('l', 'r'), 18),
+ (('p', 't'), 17),
+ (('t', 'c'), 17),
+ (('k', 't'), 17),
+ (('d', 'v'), 17),
+ (('u', 'p'), 16),
+ (('p', 'l'), 16),
+ (('l', 'w'), 16),
+ (('p', 's'), 16),
+ (('o', 'j'), 16),
+ (('r', 'q'), 16),
+ (('y', 'p'), 15),
+ (('l', 'p'), 15),
+ (('t', 'v'), 15),
+ (('r', 'p'), 14),
+ (('l', 'n'), 14),
+ (('e', 'q'), 14),
+ (('f', 'y'), 14),
+ (('s', 'v'), 14),
+ (('u', 'j'), 14),
+ (('v', 'l'), 14),
+ (('q', 'a'), 13),
+ (('u', 'y'), 13),
+ (('q', 'i'), 13),
+ (('w', 'l'), 13),
+ (('p', 'y'), 12),
+ (('y', 'f'), 12),
+ (('c', 'q'), 11),
+ (('j', 'r'), 11),
+ (('n', 'w'), 11),
+ (('n', 'f'), 11),
+ (('t', 'w'), 11),
+ (('m', 'z'), 11),
+ (('u', 'o'), 10),
+ (('f', 'u'), 10),
+ (('l', 'z'), 10),
+ (('h', 'w'), 10),
+ (('u', 'q'), 10),
+ (('j', 'y'), 10),
+ (('s', 'z'), 10),
+ (('s', 'd'), 9),
+ (('j', 'l'), 9),
+ (('d', 'j'), 9),
+ (('k', 'm'), 9),
+ (('r', 'f'), 9),
+ (('h', 'j'), 9),
+ (('v', 'n'), 8),
+ (('n', 'b'), 8),
+ (('i', 'w'), 8),
+ (('h', 'b'), 8),
+ (('b', 's'), 8),
+ (('w', 't'), 8),
+ (('w', 'd'), 8),
+ (('v', 'v'), 7),
+ (('v', 'u'), 7),
+ (('j', 's'), 7),
+ (('m', 'j'), 7),
+ (('f', 's'), 6),
+ (('l', 'g'), 6),
+ (('l', 'j'), 6),
+ (('j', 'w'), 6),
+ (('n', 'x'), 6),
+ (('y', 'q'), 6),
+ (('w', 'k'), 6),
+ (('g', 'm'), 6),
+ (('x', 'u'), 5),
+ (('m', 'h'), 5),
+ (('m', 'l'), 5),
+ (('j', 'm'), 5),
+ (('c', 's'), 5),
+ (('j', 'v'), 5),
+ (('n', 'p'), 5),
+ (('d', 'f'), 5),
+ (('x', 'd'), 5),
+ (('z', 'b'), 4),
+ (('f', 'n'), 4),
+ (('x', 'c'), 4),
+ (('m', 't'), 4),
+ (('t', 'm'), 4),
+ (('z', 'n'), 4),
+ (('z', 't'), 4),
+ (('p', 'u'), 4),
+ (('c', 'z'), 4),
+ (('b', 'n'), 4),
+ (('z', 's'), 4),
+ (('f', 'w'), 4),
+ (('d', 't'), 4),
+ (('j', 'd'), 4),
+ (('j', 'c'), 4),
+ (('y', 'w'), 4),
+ (('v', 'k'), 3),
+ (('x', 'w'), 3),
+ (('t', 'j'), 3),
+ (('c', 'j'), 3),
+ (('q', 'w'), 3),
+ (('g', 'b'), 3),
+ (('o', 'q'), 3),
+ (('r', 'x'), 3),
+ (('d', 'c'), 3),
+ (('g', 'j'), 3),
+ (('x', 'f'), 3),
+ (('z', 'w'), 3),
+ (('d', 'k'), 3),
+ (('u', 'u'), 3),
+ (('m', 'v'), 3),
+ (('c', 'x'), 3),
+ (('l', 'q'), 3),
+ (('p', 'b'), 2),
+ (('t', 'g'), 2),
+ (('q', 's'), 2),
+ (('t', 'x'), 2),
+ (('f', 'k'), 2),
+ (('b', 't'), 2),
+ (('j', 'n'), 2),
+ (('k', 'c'), 2),
+ (('z', 'k'), 2),
+ (('s', 'j'), 2),
+ (('s', 'f'), 2),
+ (('z', 'j'), 2),
+ (('n', 'q'), 2),
+ (('f', 'z'), 2),
+ (('h', 'g'), 2),
+ (('w', 'w'), 2),
+ (('k', 'j'), 2),
+ (('j', 'k'), 2),
+ (('w', 'm'), 2),
+ (('z', 'c'), 2),
+ (('z', 'v'), 2),
+ (('w', 'f'), 2),
+ (('q', 'm'), 2),
+ (('k', 'z'), 2),
+ (('j', 'j'), 2),
+ (('z', 'p'), 2),
+ (('j', 't'), 2),
+ (('k', 'b'), 2),
+ (('m', 'w'), 2),
+ (('h', 'f'), 2),
+ (('c', 'g'), 2),
+ (('t', 'f'), 2),
+ (('h', 'c'), 2),
+ (('q', 'o'), 2),
+ (('k', 'd'), 2),
+ (('k', 'v'), 2),
+ (('s', 'g'), 2),
+ (('z', 'd'), 2),
+ (('q', 'r'), 1),
+ (('d', 'z'), 1),
+ (('p', 'j'), 1),
+ (('q', 'l'), 1),
+ (('p', 'f'), 1),
+ (('q', 'e'), 1),
+ (('b', 'c'), 1),
+ (('c', 'd'), 1),
+ (('m', 'f'), 1),
+ (('p', 'n'), 1),
+ (('w', 'b'), 1),
+ (('p', 'c'), 1),
+ (('h', 'p'), 1),
+ (('f', 'h'), 1),
+ (('b', 'j'), 1),
+ (('f', 'g'), 1),
+ (('z', 'g'), 1),
+ (('c', 'p'), 1),
+ (('p', 'k'), 1),
+ (('p', 'm'), 1),
+ (('x', 'n'), 1),
+ (('s', 'q'), 1),
+ (('k', 'f'), 1),
+ (('m', 'k'), 1),
+ (('x', 'h'), 1),
+ (('g', 'f'), 1),
+ (('v', 'b'), 1),
+ (('j', 'p'), 1),
+ (('g', 'z'), 1),
+ (('v', 'd'), 1),
+ (('d', 'b'), 1),
+ (('v', 'h'), 1),
+ (('h', 'h'), 1),
+ (('g', 'v'), 1),
+ (('d', 'q'), 1),
+ (('x', 'b'), 1),
+ (('w', 'z'), 1),
+ (('h', 'q'), 1),
+ (('j', 'b'), 1),
+ (('x', 'm'), 1),
+ (('w', 'g'), 1),
+ (('t', 'b'), 1),
+ (('z', 'x'), 1)]</code></pre>
+</div>
+</div>
+<hr>
+<p><a href="https://github.com/Rahuketu86/minion/blob/main/minion/makemore/bigram.py#L14" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="stoi" class="level3">
+<h3 class="anchored" data-anchor-id="stoi">stoi</h3>
+<blockquote class="blockquote">
+<pre><code> stoi (words, start_str='&lt;S&gt;', end_str='&lt;E&gt;')</code></pre>
+</blockquote>
+<div id="cell-11" class="cell">
+<details open="" class="code-fold">
+<summary>Exported source</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> stoi(words, start_str<span class="op">=</span><span class="st">'&lt;S&gt;'</span>, end_str<span class="op">=</span><span class="st">'&lt;E&gt;'</span>):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> start_str <span class="op">!=</span> end_str:</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        d <span class="op">=</span> {s:i <span class="cf">for</span> i,s <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">sorted</span>(<span class="bu">list</span>(<span class="bu">set</span>(<span class="st">""</span>.join(words)))))}</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> <span class="bu">len</span>(d.values())</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        d[start_str] <span class="op">=</span> n</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>        d[end_str] <span class="op">=</span> n<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        d <span class="op">=</span> {s:i<span class="op">+</span><span class="dv">1</span> <span class="cf">for</span> i,s <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">sorted</span>(<span class="bu">list</span>(<span class="bu">set</span>(<span class="st">""</span>.join(words)))))}</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        d[start_str] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> d</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<hr>
+<p><a href="https://github.com/Rahuketu86/minion/blob/main/minion/makemore/bigram.py#L26" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="itos" class="level3">
+<h3 class="anchored" data-anchor-id="itos">itos</h3>
+<blockquote class="blockquote">
+<pre><code> itos (stoi)</code></pre>
+</blockquote>
+<div id="cell-13" class="cell">
+<details open="" class="code-fold">
+<summary>Exported source</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> itos(stoi):</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> { v:k <span class="cf">for</span> k, v <span class="kw">in</span> stoi.items()}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div id="cell-14" class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>s2i <span class="op">=</span> stoi(words)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>i2s <span class="op">=</span> itos(stoi(words))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>s2i, i2s</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>({'a': 0,
+  'b': 1,
+  'c': 2,
+  'd': 3,
+  'e': 4,
+  'f': 5,
+  'g': 6,
+  'h': 7,
+  'i': 8,
+  'j': 9,
+  'k': 10,
+  'l': 11,
+  'm': 12,
+  'n': 13,
+  'o': 14,
+  'p': 15,
+  'q': 16,
+  'r': 17,
+  's': 18,
+  't': 19,
+  'u': 20,
+  'v': 21,
+  'w': 22,
+  'x': 23,
+  'y': 24,
+  'z': 25,
+  '&lt;S&gt;': 26,
+  '&lt;E&gt;': 27},
+ {0: 'a',
+  1: 'b',
+  2: 'c',
+  3: 'd',
+  4: 'e',
+  5: 'f',
+  6: 'g',
+  7: 'h',
+  8: 'i',
+  9: 'j',
+  10: 'k',
+  11: 'l',
+  12: 'm',
+  13: 'n',
+  14: 'o',
+  15: 'p',
+  16: 'q',
+  17: 'r',
+  18: 's',
+  19: 't',
+  20: 'u',
+  21: 'v',
+  22: 'w',
+  23: 'x',
+  24: 'y',
+  25: 'z',
+  26: '&lt;S&gt;',
+  27: '&lt;E&gt;'})</code></pre>
+</div>
+</div>
+<div id="cell-15" class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> torch.zeros((<span class="dv">28</span>,<span class="dv">28</span>), dtype<span class="op">=</span>torch.int32)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># bigrams = {}</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> w <span class="kw">in</span> words:</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    chrs <span class="op">=</span> [<span class="st">'&lt;S&gt;'</span>] <span class="op">+</span> <span class="bu">list</span>(w) <span class="op">+</span> [<span class="st">'&lt;E&gt;'</span>]</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> ch1, ch2 <span class="kw">in</span> <span class="bu">zip</span>(chrs, chrs[<span class="dv">1</span>:]):</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>        <span class="co"># print(ch1, ch2, w)</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>        ix1 <span class="op">=</span> s2i[ch1]</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>        ix2 <span class="op">=</span> s2i[ch2]</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>        <span class="co"># bigrams[(ch1, ch2)] = bigrams.get((ch1, ch2),0) +1</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>        N[ix1, ix2] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>plt.imshow(N)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_makemore.bigram_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-16" class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_bigram(s2i, words, start_str<span class="op">=</span><span class="st">'&lt;S&gt;'</span>, end_str<span class="op">=</span><span class="st">'&lt;E&gt;'</span>):</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    sz <span class="op">=</span> <span class="bu">len</span>(s2i)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    N <span class="op">=</span> torch.zeros((sz,sz), dtype<span class="op">=</span>torch.int32)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># bigrams = {}</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> w <span class="kw">in</span> words:</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>        chrs <span class="op">=</span> [start_str] <span class="op">+</span> <span class="bu">list</span>(w) <span class="op">+</span> [end_str]</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> ch1, ch2 <span class="kw">in</span> <span class="bu">zip</span>(chrs, chrs[<span class="dv">1</span>:]):</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>            <span class="co"># print(ch1, ch2, w)</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>            ix1 <span class="op">=</span> s2i[ch1]</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>            ix2 <span class="op">=</span> s2i[ch2]</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>            <span class="co"># bigrams[(ch1, ch2)] = bigrams.get((ch1, ch2),0) +1</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>            N[ix1, ix2] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> N</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>get_bigram(s2i, words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([[ 556,  541,  470, 1042,  692,  134,  168, 2332, 1650,  175,  568, 2528,
+         1634, 5438,   63,   82,   60, 3264, 1118,  687,  381,  834,  161,  182,
+         2050,  435,    0, 6640],
+        [ 321,   38,    1,   65,  655,    0,    0,   41,  217,    1,    0,  103,
+            0,    4,  105,    0,    0,  842,    8,    2,   45,    0,    0,    0,
+           83,    0,    0,  114],
+        [ 815,    0,   42,    1,  551,    0,    2,  664,  271,    3,  316,  116,
+            0,    0,  380,    1,   11,   76,    5,   35,   35,    0,    0,    3,
+          104,    4,    0,   97],
+        [1303,    1,    3,  149, 1283,    5,   25,  118,  674,    9,    3,   60,
+           30,   31,  378,    0,    1,  424,   29,    4,   92,   17,   23,    0,
+          317,    1,    0,  516],
+        [ 679,  121,  153,  384, 1271,   82,  125,  152,  818,   55,  178, 3248,
+          769, 2675,  269,   83,   14, 1958,  861,  580,   69,  463,   50,  132,
+         1070,  181,    0, 3983],
+        [ 242,    0,    0,    0,  123,   44,    1,    1,  160,    0,    2,   20,
+            0,    4,   60,    0,    0,  114,    6,   18,   10,    0,    4,    0,
+           14,    2,    0,   80],
+        [ 330,    3,    0,   19,  334,    1,   25,  360,  190,    3,    0,   32,
+            6,   27,   83,    0,    0,  201,   30,   31,   85,    1,   26,    0,
+           31,    1,    0,  108],
+        [2244,    8,    2,   24,  674,    2,    2,    1,  729,    9,   29,  185,
+          117,  138,  287,    1,    1,  204,   31,   71,  166,   39,   10,    0,
+          213,   20,    0, 2409],
+        [2445,  110,  509,  440, 1653,  101,  428,   95,   82,   76,  445, 1345,
+          427, 2126,  588,   53,   52,  849, 1316,  541,  109,  269,    8,   89,
+          779,  277,    0, 2489],
+        [1473,    1,    4,    4,  440,    0,    0,   45,  119,    2,    2,    9,
+            5,    2,  479,    1,    0,   11,    7,    2,  202,    5,    6,    0,
+           10,    0,    0,   71],
+        [1731,    2,    2,    2,  895,    1,    0,  307,  509,    2,   20,  139,
+            9,   26,  344,    0,    0,  109,   95,   17,   50,    2,   34,    0,
+          379,    2,    0,  363],
+        [2623,   52,   25,  138, 2921,   22,    6,   19, 2480,    6,   24, 1345,
+           60,   14,  692,   15,    3,   18,   94,   77,  324,   72,   16,    0,
+         1588,   10,    0, 1314],
+        [2590,  112,   51,   24,  818,    1,    0,    5, 1256,    7,    1,    5,
+          168,   20,  452,   38,    0,   97,   35,    4,  139,    3,    2,    0,
+          287,   11,    0,  516],
+        [2977,    8,  213,  704, 1359,   11,  273,   26, 1725,   44,   58,  195,
+           19, 1906,  496,    5,    2,   44,  278,  443,   96,   55,   11,    6,
+          465,  145,    0, 6763],
+        [ 149,  140,  114,  190,  132,   34,   44,  171,   69,   16,   68,  619,
+          261, 2411,  115,   95,    3, 1059,  504,  118,  275,  176,  114,   45,
+          103,   54,    0,  855],
+        [ 209,    2,    1,    0,  197,    1,    0,  204,   61,    1,    1,   16,
+            1,    1,   59,   39,    0,  151,   16,   17,    4,    0,    0,    0,
+           12,    0,    0,   33],
+        [  13,    0,    0,    0,    1,    0,    0,    0,   13,    0,    0,    1,
+            2,    0,    2,    0,    0,    1,    2,    0,  206,    0,    3,    0,
+            0,    0,    0,   28],
+        [2356,   41,   99,  187, 1697,    9,   76,  121, 3033,   25,   90,  413,
+          162,  140,  869,   14,   16,  425,  190,  208,  252,   80,   21,    3,
+          773,   23,    0, 1377],
+        [1201,   21,   60,    9,  884,    2,    2, 1285,  684,    2,   82,  279,
+           90,   24,  531,   51,    1,   55,  461,  765,  185,   14,   24,    0,
+          215,   10,    0, 1169],
+        [1027,    1,   17,    0,  716,    2,    2,  647,  532,    3,    0,  134,
+            4,   22,  667,    0,    0,  352,   35,  374,   78,   15,   11,    2,
+          341,  105,    0,  483],
+        [ 163,  103,  103,  136,  169,   19,   47,   58,  121,   14,   93,  301,
+          154,  275,   10,   16,   10,  414,  474,   82,    3,   37,   86,   34,
+           13,   45,    0,  155],
+        [ 642,    1,    0,    1,  568,    0,    0,    1,  911,    0,    3,   14,
+            0,    8,  153,    0,    0,   48,    0,    0,    7,    7,    0,    0,
+          121,    0,    0,   88],
+        [ 280,    1,    0,    8,  149,    2,    1,   23,  148,    0,    6,   13,
+            2,   58,   36,    0,    0,   22,   20,    8,   25,    0,    2,    0,
+           73,    1,    0,   51],
+        [ 103,    1,    4,    5,   36,    3,    0,    1,  102,    0,    0,   39,
+            1,    1,   41,    0,    0,    0,   31,   70,    5,    0,    3,   38,
+           30,   19,    0,  164],
+        [2143,   27,  115,  272,  301,   12,   30,   22,  192,   23,   86, 1104,
+          148, 1826,  271,   15,    6,  291,  401,  104,  141,  106,    4,   28,
+           23,   78,    0, 2007],
+        [ 860,    4,    2,    2,  373,    0,    1,   43,  364,    2,    2,  123,
+           35,    4,  110,    2,    0,   32,    4,    4,   73,    2,    3,    1,
+          147,   45,    0,  160],
+        [4410, 1306, 1542, 1690, 1531,  417,  669,  874,  591, 2422, 2963, 1572,
+         2538, 1146,  394,  515,   92, 1639, 2055, 1308,   78,  376,  307,  134,
+          535,  929,    0,    0],
+        [   0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+            0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+            0,    0,    0,    0]], dtype=torch.int32)</code></pre>
+</div>
+</div>
+<div id="cell-17" class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> draw_bigram(N, i2s):</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    plt.figure(figsize<span class="op">=</span>(<span class="dv">16</span>,<span class="dv">16</span>))</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    plt.imshow(N, cmap<span class="op">=</span><span class="st">'Blues'</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    i_max, j_max <span class="op">=</span> N.shape</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(i_max):</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(j_max):</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>            chstr <span class="op">=</span> i2s[i]<span class="op">+</span>i2s[j]</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>            plt.text(j,i, chstr, ha<span class="op">=</span><span class="st">'center'</span>, va<span class="op">=</span><span class="st">'bottom'</span>, color<span class="op">=</span><span class="st">'gray'</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>            plt.text(j,i, N[i,j].item(), ha<span class="op">=</span><span class="st">'center'</span>, va<span class="op">=</span><span class="st">'top'</span>, color<span class="op">=</span><span class="st">'gray'</span>)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>draw_bigram(N, i2s)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_makemore.bigram_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li>We are not being clever
+<ul>
+<li><code>&lt;E&gt;</code> can’t be first character -&gt; entire row is zero</li>
+<li><code>&lt;S&gt;</code> can’t be last character -&gt; entire column is zero</li>
+<li>We can only have <code>&lt;S&gt;&lt;E&gt;</code> when we have an empty word</li>
+</ul></li>
+</ul>
+<div id="cell-19" class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>s2i <span class="op">=</span> stoi(words, start_str<span class="op">=</span><span class="st">'.'</span>, end_str<span class="op">=</span><span class="st">'.'</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>i2s <span class="op">=</span> itos(s2i)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>s2i, i2s</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>({'a': 1,
+  'b': 2,
+  'c': 3,
+  'd': 4,
+  'e': 5,
+  'f': 6,
+  'g': 7,
+  'h': 8,
+  'i': 9,
+  'j': 10,
+  'k': 11,
+  'l': 12,
+  'm': 13,
+  'n': 14,
+  'o': 15,
+  'p': 16,
+  'q': 17,
+  'r': 18,
+  's': 19,
+  't': 20,
+  'u': 21,
+  'v': 22,
+  'w': 23,
+  'x': 24,
+  'y': 25,
+  'z': 26,
+  '.': 0},
+ {1: 'a',
+  2: 'b',
+  3: 'c',
+  4: 'd',
+  5: 'e',
+  6: 'f',
+  7: 'g',
+  8: 'h',
+  9: 'i',
+  10: 'j',
+  11: 'k',
+  12: 'l',
+  13: 'm',
+  14: 'n',
+  15: 'o',
+  16: 'p',
+  17: 'q',
+  18: 'r',
+  19: 's',
+  20: 't',
+  21: 'u',
+  22: 'v',
+  23: 'w',
+  24: 'x',
+  25: 'y',
+  26: 'z',
+  0: '.'})</code></pre>
+</div>
+</div>
+<div id="cell-20" class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> get_bigram(s2i, words, start_str<span class="op">=</span><span class="st">'.'</span>, end_str<span class="op">=</span><span class="st">'.'</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>draw_bigram(N, i2s)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_makemore.bigram_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We need to sample from above table which can all the information for our bigram model</p>
+</section>
+</section>
+<section id="sampling-from-the-model" class="level2">
+<h2 class="anchored" data-anchor-id="sampling-from-the-model">Sampling from the model</h2>
+<section id="calculating-probabilities-of-starting-word" class="level3">
+<h3 class="anchored" data-anchor-id="calculating-probabilities-of-starting-word">Calculating Probabilities of starting word</h3>
+<div id="cell-24" class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> N[<span class="dv">0</span>].<span class="bu">float</span>()</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>p <span class="op">/=</span> p.<span class="bu">sum</span>()</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co">#p.sum()</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>p</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([0.0000, 0.1377, 0.0408, 0.0481, 0.0528, 0.0478, 0.0130, 0.0209, 0.0273,
+        0.0184, 0.0756, 0.0925, 0.0491, 0.0792, 0.0358, 0.0123, 0.0161, 0.0029,
+        0.0512, 0.0642, 0.0408, 0.0024, 0.0117, 0.0096, 0.0042, 0.0167, 0.0290])</code></pre>
+</div>
+</div>
+<p>So sampling from the above probability distribution (You give me probabilities and I will give u integers)</p>
+<div id="cell-26" class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>torch.multinomial??</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Docstring:
+multinomial(input, num_samples, replacement=False, *, generator=None, out=None) -&gt; LongTensor
+
+Returns a tensor where each row contains :attr:`num_samples` indices sampled
+from the multinomial probability distribution located in the corresponding row
+of tensor :attr:`input`.
+
+.. note::
+    The rows of :attr:`input` do not need to sum to one (in which case we use
+    the values as weights), but must be non-negative, finite and have
+    a non-zero sum.
+
+Indices are ordered from left to right according to when each was sampled
+(first samples are placed in first column).
+
+If :attr:`input` is a vector, :attr:`out` is a vector of size :attr:`num_samples`.
+
+If :attr:`input` is a matrix with `m` rows, :attr:`out` is an matrix of shape
+:math:`(m \times \text{num\_samples})`.
+
+If replacement is ``True``, samples are drawn with replacement.
+
+If not, they are drawn without replacement, which means that when a
+sample index is drawn for a row, it cannot be drawn again for that row.
+
+.. note::
+    When drawn without replacement, :attr:`num_samples` must be lower than
+    number of non-zero elements in :attr:`input` (or the min number of non-zero
+    elements in each row of :attr:`input` if it is a matrix).
+
+Args:
+    input (Tensor): the input tensor containing probabilities
+    num_samples (int): number of samples to draw
+    replacement (bool, optional): whether to draw with replacement or not
+
+Keyword args:
+    generator (:class:`torch.Generator`, optional): a pseudorandom number generator for sampling
+    out (Tensor, optional): the output tensor.
+
+Example::
+
+    &gt;&gt;&gt; weights = torch.tensor([0, 10, 3, 0], dtype=torch.float) # create a tensor of weights
+    &gt;&gt;&gt; torch.multinomial(weights, 2)
+    tensor([1, 2])
+    &gt;&gt;&gt; torch.multinomial(weights, 4) # ERROR!
+    RuntimeError: invalid argument 2: invalid multinomial distribution (with replacement=False,
+    not enough non-negative category to sample) at ../aten/src/TH/generic/THTensorRandom.cpp:320
+    &gt;&gt;&gt; torch.multinomial(weights, 4, replacement=True)
+    tensor([ 2,  1,  1,  1])
+Type:      builtin_function_or_method</code></pre>
+</div>
+</div>
+<div id="cell-27" class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> torch.Generator().manual_seed(<span class="dv">2147483647</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co"># torch.multinomial(p, num_samples=3, replacement=True, generator=g)</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> torch.rand(<span class="dv">3</span>, generator<span class="op">=</span>g)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>t <span class="op">/=</span> t.<span class="bu">sum</span>()</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>t</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([0.6064, 0.3033, 0.0903])</code></pre>
+</div>
+</div>
+<div id="cell-28" class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>torch.multinomial(t, num_samples<span class="op">=</span><span class="dv">100</span>, replacement<span class="op">=</span><span class="va">True</span>, generator<span class="op">=</span>g)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([1, 1, 2, 0, 0, 2, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 2, 0, 0,
+        1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1,
+        0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+        0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 1, 0,
+        0, 1, 1, 1])</code></pre>
+</div>
+</div>
+<div id="cell-29" class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> torch.Generator().manual_seed(<span class="dv">2147483647</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>ix <span class="op">=</span> torch.multinomial(p, num_samples<span class="op">=</span><span class="dv">1</span>, replacement<span class="op">=</span><span class="va">True</span>, generator<span class="op">=</span>g).item()</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>i2s[ix]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>'c'</code></pre>
+</div>
+</div>
+<p>After sampling above character move to character that starts from that character</p>
+<div id="cell-31" class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> torch.Generator().manual_seed(<span class="dv">2147483647</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gen_word_uniform(i2s, n_samples<span class="op">=</span><span class="dv">20</span>, g<span class="op">=</span>torch.Generator().manual_seed(<span class="dv">2147483647</span>)):</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    gen_words <span class="op">=</span> []</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_samples):</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>        ix <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>        gen_word <span class="op">=</span> <span class="st">""</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>            p <span class="op">=</span> torch.ones(<span class="bu">len</span>(i2s))<span class="op">/</span><span class="bu">len</span>(i2s)</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>            ix <span class="op">=</span> torch.multinomial(p, num_samples<span class="op">=</span><span class="dv">1</span>, replacement<span class="op">=</span><span class="va">True</span>, generator<span class="op">=</span>g).item()</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>            <span class="co"># print(i2s[ix])</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> ix <span class="op">==</span> <span class="dv">0</span>: <span class="cf">break</span></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:gen_word <span class="op">=</span>  gen_word <span class="op">+</span> i2s[ix]</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>        gen_words.append(gen_word)</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gen_words</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gen_word_bigram(N, i2s, n_samples<span class="op">=</span><span class="dv">20</span>, g<span class="op">=</span>torch.Generator().manual_seed(<span class="dv">2147483647</span>)):</span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>    gen_words <span class="op">=</span> []</span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_samples):</span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>        ix <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>        gen_word <span class="op">=</span> <span class="st">""</span></span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a>            p <span class="op">=</span> N[ix].<span class="bu">float</span>()</span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a>            p <span class="op">/=</span> p.<span class="bu">sum</span>()</span>
+<span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a>            ix <span class="op">=</span> torch.multinomial(p, num_samples<span class="op">=</span><span class="dv">1</span>, replacement<span class="op">=</span><span class="va">True</span>, generator<span class="op">=</span>g).item()</span>
+<span id="cb32-27"><a href="#cb32-27" aria-hidden="true" tabindex="-1"></a>            <span class="co"># print(i2s[ix])</span></span>
+<span id="cb32-28"><a href="#cb32-28" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> ix <span class="op">==</span> <span class="dv">0</span>: <span class="cf">break</span></span>
+<span id="cb32-29"><a href="#cb32-29" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:gen_word <span class="op">=</span>  gen_word <span class="op">+</span> i2s[ix]</span>
+<span id="cb32-30"><a href="#cb32-30" aria-hidden="true" tabindex="-1"></a>        gen_words.append(gen_word)</span>
+<span id="cb32-31"><a href="#cb32-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gen_words</span>
+<span id="cb32-32"><a href="#cb32-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-33"><a href="#cb32-33" aria-hidden="true" tabindex="-1"></a>gen_word_bigram(N, i2s, <span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>['cexze',
+ 'momasurailezitynn',
+ 'konimittain',
+ 'llayn',
+ 'ka',
+ 'da',
+ 'staiyaubrtthrigotai',
+ 'moliellavo',
+ 'ke',
+ 'teda',
+ 'ka',
+ 'emimmsade',
+ 'enkaviyny',
+ 'ftlspihinivenvorhlasu',
+ 'dsor',
+ 'br',
+ 'jol',
+ 'pen',
+ 'aisan',
+ 'ja']</code></pre>
+</div>
+</div>
+<div id="cell-32" class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>gen_word_uniform(i2s, <span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>['cexzm',
+ 'zoglkurkicqzktyhwmvmzimjttainrlkfukzkktda',
+ 'sfcxvpubjtbhrmgotzx',
+ 'iczixqctvujkwptedogkkjemkmmsidguenkbvgynywftbspmhwcivgbvtahlvsu',
+ 'dsdxxblnwglhpyiw',
+ 'igwnjwrpfdwipkwzkm',
+ 'desu',
+ 'firmt',
+ 'gbiksjbquabsvoth',
+ 'kuysxqevhcmrbxmcwyhrrjenvxmvpfkmwmghfvjzxobomysox',
+ 'gbptjapxweegpfwhccfyzfvksiiqmvwbhmiwqmdgzqsamjhgamcxwmmk',
+ 'iswcxfmbalcslhy',
+ 'fpycvasvz',
+ 'bqzazeunschck',
+ 'wnkojuoxyvtvfiwksddugnkul',
+ 'fuwfcgjz',
+ 'abl',
+ 'j',
+ 'nuuutstofgqzubbo',
+ 'rdubpknhmd']</code></pre>
+</div>
+</div>
+<div id="cell-33" class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gen_word_prob(P, i2s, n_samples<span class="op">=</span><span class="dv">20</span>, g<span class="op">=</span>torch.Generator().manual_seed(<span class="dv">2147483647</span>)):</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    gen_words <span class="op">=</span> []</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_samples):</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>        ix <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>        gen_word <span class="op">=</span> <span class="st">""</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>            p <span class="op">=</span> P[ix]</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>            ix <span class="op">=</span> torch.multinomial(p, num_samples<span class="op">=</span><span class="dv">1</span>, replacement<span class="op">=</span><span class="va">True</span>, generator<span class="op">=</span>g).item()</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>            <span class="co"># print(i2s[ix])</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> ix <span class="op">==</span> <span class="dv">0</span>: <span class="cf">break</span></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:gen_word <span class="op">=</span>  gen_word <span class="op">+</span> i2s[ix]</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>        gen_words.append(gen_word)</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gen_words</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-34" class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>M <span class="op">=</span> torch.randint(<span class="dv">3</span>, <span class="dv">10</span>, (<span class="dv">2</span>,<span class="dv">2</span>))<span class="op">;</span> M</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>display(M)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>M.<span class="bu">sum</span>(), M.<span class="bu">sum</span>(dim<span class="op">=</span><span class="dv">0</span>), M.<span class="bu">sum</span>(dim<span class="op">=</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([[5, 5],
+        [5, 3]])</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>(tensor(18),
+ tensor([10,  8]),
+ tensor([[10],
+         [ 8]]))</code></pre>
+</div>
+</div>
+<div id="cell-35" class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>M <span class="op">=</span> torch.Tensor([[<span class="dv">2</span>,<span class="dv">2</span>],[<span class="dv">3</span>,<span class="dv">3</span>]])</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>M<span class="op">/</span>M.<span class="bu">sum</span>(dim<span class="op">=</span><span class="dv">1</span>,keepdim<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([[0.5000, 0.5000],
+        [0.5000, 0.5000]])</code></pre>
+</div>
+</div>
+<div id="cell-36" class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>P_bigram <span class="op">=</span> N<span class="op">/</span>N.<span class="bu">sum</span>(dim<span class="op">=</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>P_bigram</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>gen_word_prob(P_bigram, i2s)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>['cexze',
+ 'momasurailezitynn',
+ 'konimittain',
+ 'llayn',
+ 'ka',
+ 'da',
+ 'staiyaubrtthrigotai',
+ 'moliellavo',
+ 'ke',
+ 'teda',
+ 'ka',
+ 'emimmsade',
+ 'enkaviyny',
+ 'ftlspihinivenvorhlasu',
+ 'dsor',
+ 'br',
+ 'jol',
+ 'pen',
+ 'aisan',
+ 'ja']</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>Respect the broadcasting rules described <a href="https://pytorch.org/docs/stable/notes/broadcasting.html">here</a>. Mistakes in broadcasting can lead to very hard to diagnose bugs</li>
+<li>Figure out a quantifiable way to measure performance of our bigram model and quality of prediction generated from it.</li>
+</ul>
+</div>
+</div>
+<div id="cell-38" class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># correct</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>P_bigram <span class="op">=</span> N<span class="op">/</span>N.<span class="bu">sum</span>(dim<span class="op">=</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>P_bigram</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>gen_word_prob(P_bigram, i2s)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>['feniee',
+ 'zem',
+ 'deru',
+ 'firit',
+ 'gaikajahahbevare',
+ 'kiysthelenaririenah',
+ 'keen',
+ 'x',
+ 'al',
+ 'kal',
+ 'thavazeeromysos',
+ 'laitenimieegariseriyen',
+ 'k',
+ 'illeleldole',
+ 'meenisammigama',
+ 'mmin',
+ 'asharin',
+ 'alcalar',
+ 'jayn',
+ 'asaz']</code></pre>
+</div>
+</div>
+<div id="cell-39" class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co">#incorrect </span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>P_bigram <span class="op">=</span> N<span class="op">/</span>N.<span class="bu">sum</span>(dim<span class="op">=</span><span class="dv">1</span>) </span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>P_bigram</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>gen_word_prob(P_bigram, i2s)</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 27 27</span></span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 27  -&gt; 1 27 </span></span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a><span class="co">## Leads to division by columns</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>['bezazexxzahay',
+ 'ppppppowyvivovockhougefulubuwycabo',
+ 'abdajonnuutetofaququbowrdubekahme',
+ 'phfacckaradazzzyj',
+ 'gh',
+ 'fryllbahrlrylmpph',
+ 'ron',
+ 'xxtayx',
+ 'vn',
+ 'gixxossth',
+ 'memppphlfftiriquvyudwhzynay',
+ 'kondrzevipubrbonovng',
+ 'ffkismjamchexxorizuwfexxtaququnnfwuquemawowssavajepporepawhoxsofikwesoynndavuxxwavurohansoxidezusckexxeghzulhaququwub',
+ 'kawuffumathuqubropphvigtaquh',
+ 'jux',
+ 'pppon',
+ 'zzzzagitwickycqionghvvilciqufuwh',
+ 'xiv',
+ 'qukemadedawifwwea',
+ 'fffffrlolelpppoyjelyngopphyazahimmyobdish']</code></pre>
+</div>
+</div>
+<div id="cell-40" class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co"># correct</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>P_bigram <span class="op">=</span> N<span class="op">/</span>N.<span class="bu">sum</span>(dim<span class="op">=</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>P_bigram</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>gen_word_prob(P_bigram, i2s)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>['con',
+ 'alomaruikeee',
+ 'djhammy',
+ 'arileedistanahistl',
+ 'on',
+ 'iy',
+ 'riyeti',
+ 'kazla',
+ 'aus',
+ 'ckadsi',
+ 'lisakhylendeese',
+ 'ferah',
+ 'ri',
+ 'alsorayna',
+ 'ahava',
+ 'eliladeladainalyav',
+ 'anava',
+ 'ke',
+ 'br',
+ 'jaylian']</code></pre>
+</div>
+</div>
+</section>
+<section id="measuring-bigram-performance" class="level3">
+<h3 class="anchored" data-anchor-id="measuring-bigram-performance">Measuring bigram performance</h3>
+<div id="cell-42" class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ll = torch.tensor[0]</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ll = torch.tensor([0.0], dtype=float)</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="co"># for w in words[:3]:</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a><span class="co">#     for ch1, ch2 in zip(w, w[1:]):</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a><span class="co">#         ll += P_bigram[s2i[ch1], s2i[ch2]].log().item()</span></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a><span class="co">#         print(f"{ch1}{ch2}", P_bigram[s2i[ch1], s2i[ch2]].log().item())</span></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nll_score(P, words, s2i, start_str<span class="op">=</span><span class="st">'.'</span>, end_str<span class="op">=</span><span class="st">'.'</span>, average<span class="op">=</span><span class="va">False</span>, verbose<span class="op">=</span><span class="va">False</span>):</span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">''' Quality of model and loss function'''</span></span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>    ll <span class="op">=</span> torch.tensor([<span class="fl">0.0</span>], dtype<span class="op">=</span><span class="bu">float</span>) <span class="co"># Log likelihood</span></span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="dv">0</span> </span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> w <span class="kw">in</span> words:</span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>        chrs <span class="op">=</span> [start_str]<span class="op">+</span><span class="bu">list</span>(w)<span class="op">+</span> [end_str] <span class="co"># Don't forget start and end string in evaluating the model</span></span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> ch1, ch2 <span class="kw">in</span> <span class="bu">zip</span>(chrs, chrs[<span class="dv">1</span>:]):</span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>            ll <span class="op">+=</span> P[s2i[ch1], s2i[ch2]].log().item()</span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>            n <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> verbose: <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>ch1<span class="sc">}{</span>ch2<span class="sc">}</span><span class="ss">"</span>,<span class="ss">f"prob: </span><span class="sc">{</span>P[s2i[ch1], s2i[ch2]]<span class="sc">}</span><span class="ss">"</span>, <span class="ss">f"</span><span class="ch">\t</span><span class="ss">nll : </span><span class="sc">{</span><span class="op">-</span>P[s2i[ch1], s2i[ch2]]<span class="sc">.</span>log()<span class="sc">.</span>item()<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb50-18"><a href="#cb50-18" aria-hidden="true" tabindex="-1"></a>    nll <span class="op">=</span> <span class="op">-</span><span class="dv">1</span><span class="op">*</span>ll</span>
+<span id="cb50-19"><a href="#cb50-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> average: nll <span class="op">/=</span>n</span>
+<span id="cb50-20"><a href="#cb50-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> nll</span>
+<span id="cb50-21"><a href="#cb50-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-22"><a href="#cb50-22" aria-hidden="true" tabindex="-1"></a>nll_score(P_bigram, words, s2i, average<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([2.4540], dtype=torch.float64)</code></pre>
+</div>
+</div>
+<div id="cell-43" class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>P_uniform <span class="op">=</span> torch.ones([<span class="dv">27</span>, <span class="dv">27</span>])<span class="op">/</span><span class="dv">27</span> <span class="co">## Completely random model - every bigram have same probability</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>P_uniform</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>nll_score(P_uniform, words, s2i)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([751932.0112], dtype=torch.float64)</code></pre>
+</div>
+</div>
+<div class="{callout-summary}">
+<ul>
+<li>For the best possible match every bigram will have prediction probability of 1</li>
+<li>Probability of entire dataset will be 1 (p1<em>p2</em>p3…pn)</li>
+<li>So log likelihood would be maximum at 0 .</li>
+<li>nll is minimum at 0 and maximum greater than zero. Forms a very nice loss function</li>
+</ul>
+<p>Goal</p>
+<ul>
+<li>Maximize likelihood of the data w.r.t model parameters (statistical modelling)</li>
+<li>Equivalent to maximizing log likelihood ( becoz log is monotonic)</li>
+<li>Equivalent to minimizing nll and average nll</li>
+</ul>
+</div>
+<div id="cell-45" class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>xs <span class="op">=</span> torch.arange(<span class="dv">1</span>, <span class="dv">10000</span>, <span class="dv">1</span>)</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>ys <span class="op">=</span> <span class="op">-</span>xs.log()</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>plt.plot(xs, ys)</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Negative Log function"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>Text(0.5, 1.0, 'Negative Log function')</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_makemore.bigram_files/figure-html/cell-33-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-46" class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span><span class="op">/</span><span class="bu">len</span>(s2i)<span class="op">**</span><span class="dv">2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>0.0013717421124828531</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="model-smoothing-with-fake-count" class="level2">
+<h2 class="anchored" data-anchor-id="model-smoothing-with-fake-count">Model Smoothing with fake count</h2>
+<div id="cell-48" class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>nll_score(P_bigram, [<span class="st">'rahulx'</span>, <span class="st">'andrejq'</span>], s2i, average<span class="op">=</span><span class="va">True</span>,verbose<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>.r prob: 0.05116598680615425    nll : 2.9726803302764893
+ra prob: 0.18551181256771088    nll : 1.6846367120742798
+ah prob: 0.0688210129737854     nll : 2.676246166229248
+hu prob: 0.021796219050884247   nll : 3.826018810272217
+ul prob: 0.09601275622844696    nll : 2.3432741165161133
+lx prob: 0.0    nll : inf
+x. prob: 0.23529411852359772    nll : 1.4469189643859863
+.a prob: 0.13767053186893463    nll : 1.9828919172286987
+an prob: 0.16048398613929749    nll : 1.8295611143112183
+nd prob: 0.03841327130794525    nll : 3.259352207183838
+dr prob: 0.07714701443910599    nll : 2.562042474746704
+re prob: 0.13362205028533936    nll : 2.012739896774292
+ej prob: 0.0026930421590805054  nll : 5.917083740234375
+jq prob: 0.0    nll : inf
+q. prob: 0.10294117778539658    nll : 2.273597478866577</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([inf], dtype=torch.float64)</code></pre>
+</div>
+</div>
+<div id="cell-49" class="cell">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>sc <span class="op">=</span> <span class="dv">1</span>  <span class="co">#smoothing_coefficient -- laplace smoothing -&gt; adding fake counts to everything</span></span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>P <span class="op">=</span> (N<span class="op">+</span>sc)</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>P_bigram_smooth <span class="op">=</span> P<span class="op">/</span>P.<span class="bu">sum</span>(dim<span class="op">=</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>)<span class="op">;</span> P_bigram_smooth</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>nll_score(P_bigram_smooth, [<span class="st">'rahulx'</span>, <span class="st">'andrejq'</span>], s2i, average<span class="op">=</span><span class="va">True</span>,verbose<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>.r prob: 0.051154084503650665   nll : 2.9729130268096924
+ra prob: 0.18519683182239532    nll : 1.6863360404968262
+ah prob: 0.06879570335149765    nll : 2.6766140460968018
+hu prob: 0.021850058808922768   nll : 3.823551654815674
+ul prob: 0.09550917148590088    nll : 2.3485329151153564
+lx prob: 7.150518649723381e-05  nll : 9.545740127563477
+x. prob: 0.22790054976940155    nll : 1.4788459539413452
+.a prob: 0.13758577406406403    nll : 1.983507752418518
+an prob: 0.16038569808006287    nll : 1.8301737308502197
+nd prob: 0.03841124475002289    nll : 3.2594051361083984
+dr prob: 0.07695093005895615    nll : 2.564587354660034
+re prob: 0.13341714441776276    nll : 2.0142745971679688
+ej prob: 0.002738386392593384   nll : 5.900386333465576
+jq prob: 0.0003416467516217381  nll : 7.981733322143555
+q. prob: 0.09698996692895889    nll : 2.3331477642059326</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([3.4933], dtype=torch.float64)</code></pre>
+</div>
+</div>
+<ul>
+<li>laplace smoothing -&gt; adding fake counts to everything</li>
+<li>more you add more smoother model you have</li>
+<li>less you add more peaky</li>
+</ul>
+</section>
+<section id="bigram-modelling-using-a-neural-network-framework" class="level2">
+<h2 class="anchored" data-anchor-id="bigram-modelling-using-a-neural-network-framework">Bigram modelling using a Neural Network Framework</h2>
+<section id="bigram-training-set" class="level3">
+<h3 class="anchored" data-anchor-id="bigram-training-set">Bigram Training Set</h3>
+<div id="cell-53" class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_bigram_data(s2i, words, start_str<span class="op">=</span><span class="st">'.'</span>, end_str<span class="op">=</span><span class="st">'.'</span>, verbose<span class="op">=</span><span class="va">False</span>):</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># sz = len(s2i)</span></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># N = torch.zeros((sz,sz), dtype=torch.int32)</span></span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># bigrams = {}</span></span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>    xs, ys <span class="op">=</span> [], []</span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> w <span class="kw">in</span> words:</span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a>        chrs <span class="op">=</span> [start_str] <span class="op">+</span> <span class="bu">list</span>(w) <span class="op">+</span> [end_str]</span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> ch1, ch2 <span class="kw">in</span> <span class="bu">zip</span>(chrs, chrs[<span class="dv">1</span>:]):</span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>            <span class="co"># print(ch1, ch2, w)</span></span>
+<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a>            ix1 <span class="op">=</span> s2i[ch1]</span>
+<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>            ix2 <span class="op">=</span> s2i[ch2]</span>
+<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a>            xs.append(ix1)</span>
+<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a>            ys.append(ix2)</span>
+<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> verbose: <span class="bu">print</span>(ch1, ch2)</span>
+<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.tensor(xs), torch.tensor(ys)</span>
+<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-17"><a href="#cb64-17" aria-hidden="true" tabindex="-1"></a>get_bigram_data(s2i, words[:<span class="dv">1</span>], verbose<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>. e
+e m
+m m
+m a
+a .</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>(tensor([ 0,  5, 13, 13,  1]), tensor([ 5, 13, 13,  1,  0]))</code></pre>
+</div>
+</div>
+<p>We want</p>
+<ul>
+<li>When 0 is inputted we want 5 to have high probability</li>
+<li>5 =&gt; 13 to have high probability</li>
+<li>13 =&gt; 13 and 1 to have high probability</li>
+<li>1 =&gt; 0 to have high probability</li>
+</ul>
+<p>Caution - torch.Tensor -&gt; Gives float tensor, stick with torch.tensor</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>It doesn’t make sense to have neuron take an integer value</li>
+<li>We do one hot encoding to create vector per character</li>
+</ul>
+</div>
+</div>
+<div id="cell-55" class="cell">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>xs, ys <span class="op">=</span> get_bigram_data(s2i, words[:<span class="dv">1</span>], verbose<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>xenc <span class="op">=</span> F.one_hot(xs, num_classes<span class="op">=</span><span class="bu">len</span>(s2i)).<span class="bu">float</span>() <span class="co"># We need floats for neural nets</span></span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>xenc, xenc.shape, <span class="bu">len</span>(s2i)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>. e
+e m
+m m
+m a
+a .</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>(tensor([[1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+          0., 0., 0., 0., 0., 0., 0., 0., 0.],
+         [0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+          0., 0., 0., 0., 0., 0., 0., 0., 0.],
+         [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0.,
+          0., 0., 0., 0., 0., 0., 0., 0., 0.],
+         [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0.,
+          0., 0., 0., 0., 0., 0., 0., 0., 0.],
+         [0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+          0., 0., 0., 0., 0., 0., 0., 0., 0.]]),
+ torch.Size([5, 27]),
+ 27)</code></pre>
+</div>
+</div>
+<div id="cell-56" class="cell">
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>plt.imshow(xenc)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_makemore.bigram_files/figure-html/cell-39-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-57" class="cell">
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>xenc.dtype</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>torch.float32</code></pre>
+</div>
+</div>
+<div id="cell-58" class="cell">
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>W <span class="op">=</span> torch.randn((<span class="bu">len</span>(s2i), <span class="dv">1</span>)) <span class="co"># (27,1)</span></span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> xenc <span class="op">@</span> W <span class="co"># Feeding 5 examples generated from 1 word to a single neuron -- getting 5 outputs</span></span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>xs.shape, xenc.shape, W.shape, out.shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>(torch.Size([5]), torch.Size([5, 27]), torch.Size([27, 1]), torch.Size([5, 1]))</code></pre>
+</div>
+</div>
+<p>Instead of a single neuron, we need 27 neuron.</p>
+<div id="cell-60" class="cell">
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>W <span class="op">=</span> torch.randn((<span class="bu">len</span>(s2i), <span class="bu">len</span>(s2i))) <span class="co"># (27,27)</span></span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>xenc<span class="op">@</span>W</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([[-0.5425, -0.4727,  0.2631,  0.9664, -0.4823,  1.1637,  1.3163, -0.0867,
+          0.9266, -1.3753,  1.7537,  0.4577, -0.8461,  0.7318,  2.7416, -0.1527,
+          0.9721, -2.3772, -0.1724,  1.1135,  0.4819, -0.7808, -0.2828, -0.4402,
+         -0.9150, -0.4064, -0.2269],
+        [ 0.9037, -1.2343,  1.9821, -1.5771,  0.0861, -0.4648, -0.8567, -0.7916,
+         -0.1062,  0.1024, -0.0070, -0.9137, -0.3859, -0.7395,  1.2065,  1.7667,
+          1.5497,  0.8004, -0.7675, -0.6418, -0.8466,  0.1095, -0.3022,  0.1418,
+         -1.6964,  1.3404,  0.2402],
+        [-1.6066,  1.0021,  0.2541, -0.9340, -2.6119, -0.6086, -0.1349, -1.4602,
+         -1.1129,  0.8230, -0.5123,  1.0095, -0.8773,  1.6874,  0.5974,  1.3142,
+          1.3050,  1.4640,  0.3140, -0.0513, -0.0559, -2.0696, -2.6951, -0.8411,
+         -0.9159, -1.1159,  0.6912],
+        [-1.6066,  1.0021,  0.2541, -0.9340, -2.6119, -0.6086, -0.1349, -1.4602,
+         -1.1129,  0.8230, -0.5123,  1.0095, -0.8773,  1.6874,  0.5974,  1.3142,
+          1.3050,  1.4640,  0.3140, -0.0513, -0.0559, -2.0696, -2.6951, -0.8411,
+         -0.9159, -1.1159,  0.6912],
+        [-1.2354, -0.5335,  0.7778,  1.1064,  1.8945, -0.2293,  0.0302,  0.1971,
+          0.4391,  0.3307,  0.0352, -0.5932,  0.1638,  1.8177,  0.0060,  0.5573,
+          0.9359, -1.1134, -0.0323, -0.6788, -0.5133, -0.3633, -0.3319, -1.9343,
+         -0.0853, -0.5338,  0.3477]])</code></pre>
+</div>
+</div>
+<p>This tells us firing rate of neuron on input</p>
+<ul>
+<li>5,27 @ (27, 27) -&gt; (5, 27)</li>
+<li>Output indicates for every one of those 27 neurons , what is the firing rate on every one of those 5 examples</li>
+<li>27 some +ve , some -ve ; how to interpret them</li>
+<li>27 neurons are giving us log counts -&gt; to get we exponentiate them elementwise</li>
+</ul>
+<div id="cell-62" class="cell">
+<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>(xenc<span class="op">@</span>W).exp()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([[ 0.5813,  0.6233,  1.3010,  2.6285,  0.6174,  3.2018,  3.7296,  0.9170,
+          2.5260,  0.2528,  5.7762,  1.5804,  0.4291,  2.0788, 15.5121,  0.8584,
+          2.6434,  0.0928,  0.8416,  3.0451,  1.6191,  0.4580,  0.7537,  0.6439,
+          0.4005,  0.6661,  0.7970],
+        [ 2.4687,  0.2910,  7.2582,  0.2066,  1.0899,  0.6282,  0.4245,  0.4531,
+          0.8992,  1.1078,  0.9931,  0.4010,  0.6798,  0.4773,  3.3416,  5.8517,
+          4.7101,  2.2264,  0.4642,  0.5263,  0.4289,  1.1157,  0.7392,  1.1524,
+          0.1833,  3.8205,  1.2715],
+        [ 0.2006,  2.7239,  1.2893,  0.3930,  0.0734,  0.5441,  0.8738,  0.2322,
+          0.3286,  2.2773,  0.5991,  2.7442,  0.4159,  5.4052,  1.8173,  3.7217,
+          3.6879,  4.3232,  1.3689,  0.9500,  0.9456,  0.1262,  0.0675,  0.4313,
+          0.4001,  0.3276,  1.9960],
+        [ 0.2006,  2.7239,  1.2893,  0.3930,  0.0734,  0.5441,  0.8738,  0.2322,
+          0.3286,  2.2773,  0.5991,  2.7442,  0.4159,  5.4052,  1.8173,  3.7217,
+          3.6879,  4.3232,  1.3689,  0.9500,  0.9456,  0.1262,  0.0675,  0.4313,
+          0.4001,  0.3276,  1.9960],
+        [ 0.2907,  0.5865,  2.1768,  3.0235,  6.6494,  0.7951,  1.0307,  1.2179,
+          1.5513,  1.3920,  1.0358,  0.5526,  1.1780,  6.1580,  1.0060,  1.7459,
+          2.5496,  0.3284,  0.9682,  0.5072,  0.5985,  0.6953,  0.7176,  0.1445,
+          0.9183,  0.5864,  1.4158]])</code></pre>
+</div>
+</div>
+<div id="cell-63" class="cell">
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Forward pass</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>logits <span class="op">=</span> xenc<span class="op">@</span>W <span class="co"># log-counts</span></span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>counts <span class="op">=</span> logits.exp() <span class="co"># equivalent N</span></span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>probs <span class="op">=</span> counts<span class="op">/</span> counts.<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)<span class="op">;</span> probs</span>
+<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> <span class="op">-</span>probs.log().mean()</span>
+<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a>loss</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor(3.8337)</code></pre>
+</div>
+</div>
+<div id="cell-64" class="cell">
+<div class="sourceCode cell-code" id="cb81"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>logits</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([[-0.5425, -0.4727,  0.2631,  0.9664, -0.4823,  1.1637,  1.3163, -0.0867,
+          0.9266, -1.3753,  1.7537,  0.4577, -0.8461,  0.7318,  2.7416, -0.1527,
+          0.9721, -2.3772, -0.1724,  1.1135,  0.4819, -0.7808, -0.2828, -0.4402,
+         -0.9150, -0.4064, -0.2269],
+        [ 0.9037, -1.2343,  1.9821, -1.5771,  0.0861, -0.4648, -0.8567, -0.7916,
+         -0.1062,  0.1024, -0.0070, -0.9137, -0.3859, -0.7395,  1.2065,  1.7667,
+          1.5497,  0.8004, -0.7675, -0.6418, -0.8466,  0.1095, -0.3022,  0.1418,
+         -1.6964,  1.3404,  0.2402],
+        [-1.6066,  1.0021,  0.2541, -0.9340, -2.6119, -0.6086, -0.1349, -1.4602,
+         -1.1129,  0.8230, -0.5123,  1.0095, -0.8773,  1.6874,  0.5974,  1.3142,
+          1.3050,  1.4640,  0.3140, -0.0513, -0.0559, -2.0696, -2.6951, -0.8411,
+         -0.9159, -1.1159,  0.6912],
+        [-1.6066,  1.0021,  0.2541, -0.9340, -2.6119, -0.6086, -0.1349, -1.4602,
+         -1.1129,  0.8230, -0.5123,  1.0095, -0.8773,  1.6874,  0.5974,  1.3142,
+          1.3050,  1.4640,  0.3140, -0.0513, -0.0559, -2.0696, -2.6951, -0.8411,
+         -0.9159, -1.1159,  0.6912],
+        [-1.2354, -0.5335,  0.7778,  1.1064,  1.8945, -0.2293,  0.0302,  0.1971,
+          0.4391,  0.3307,  0.0352, -0.5932,  0.1638,  1.8177,  0.0060,  0.5573,
+          0.9359, -1.1134, -0.0323, -0.6788, -0.5133, -0.3633, -0.3319, -1.9343,
+         -0.0853, -0.5338,  0.3477]])</code></pre>
+</div>
+</div>
+<div id="cell-65" class="cell">
+<div class="sourceCode cell-code" id="cb83"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>probs[<span class="dv">0</span>], </span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>probs[<span class="dv">0</span>].shape, probs.shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>(torch.Size([27]), torch.Size([5, 27]))</code></pre>
+</div>
+</div>
+<div id="cell-66" class="cell">
+<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="co"># W = None</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-67" class="cell">
+<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>P_bigram_smooth.shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>torch.Size([27, 27])</code></pre>
+</div>
+</div>
+<div id="cell-68" class="cell">
+<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>xenc<span class="op">@</span>W</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tensor([[-0.5425, -0.4727,  0.2631,  0.9664, -0.4823,  1.1637,  1.3163, -0.0867,
+          0.9266, -1.3753,  1.7537,  0.4577, -0.8461,  0.7318,  2.7416, -0.1527,
+          0.9721, -2.3772, -0.1724,  1.1135,  0.4819, -0.7808, -0.2828, -0.4402,
+         -0.9150, -0.4064, -0.2269],
+        [ 0.9037, -1.2343,  1.9821, -1.5771,  0.0861, -0.4648, -0.8567, -0.7916,
+         -0.1062,  0.1024, -0.0070, -0.9137, -0.3859, -0.7395,  1.2065,  1.7667,
+          1.5497,  0.8004, -0.7675, -0.6418, -0.8466,  0.1095, -0.3022,  0.1418,
+         -1.6964,  1.3404,  0.2402],
+        [-1.6066,  1.0021,  0.2541, -0.9340, -2.6119, -0.6086, -0.1349, -1.4602,
+         -1.1129,  0.8230, -0.5123,  1.0095, -0.8773,  1.6874,  0.5974,  1.3142,
+          1.3050,  1.4640,  0.3140, -0.0513, -0.0559, -2.0696, -2.6951, -0.8411,
+         -0.9159, -1.1159,  0.6912],
+        [-1.6066,  1.0021,  0.2541, -0.9340, -2.6119, -0.6086, -0.1349, -1.4602,
+         -1.1129,  0.8230, -0.5123,  1.0095, -0.8773,  1.6874,  0.5974,  1.3142,
+          1.3050,  1.4640,  0.3140, -0.0513, -0.0559, -2.0696, -2.6951, -0.8411,
+         -0.9159, -1.1159,  0.6912],
+        [-1.2354, -0.5335,  0.7778,  1.1064,  1.8945, -0.2293,  0.0302,  0.1971,
+          0.4391,  0.3307,  0.0352, -0.5932,  0.1638,  1.8177,  0.0060,  0.5573,
+          0.9359, -1.1134, -0.0323, -0.6788, -0.5133, -0.3633, -0.3319, -1.9343,
+         -0.0853, -0.5338,  0.3477]])</code></pre>
+</div>
+</div>
+<div id="cell-69" class="cell">
+<div class="sourceCode cell-code" id="cb90"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="co"># prob_13 = probs[3, 13]; prob_13</span></span>
+<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a>(xenc<span class="op">@</span>W)[<span class="dv">3</span>, <span class="dv">13</span>], (xenc[<span class="dv">3</span>]<span class="op">*</span>W[:,<span class="dv">13</span>]).<span class="bu">sum</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>(tensor(1.6874), tensor(1.6874))</code></pre>
+</div>
+</div>
+<ul>
+<li><code>(xenc@W)[3, 13]</code> indicates firing rate of the neuron(Firing rate of 13th neuron looking at the 3rd input)</li>
+<li>The way this is achieved by doing a dot product between 3rd input and 13th column of the weight matrix W</li>
+<li>Using matrix multiplication we can evaluate
+<ul>
+<li>Lot’s of input example in a batch, and lot’s of neuron with a weight in column 13</li>
+</ul></li>
+</ul>
+</section>
+<section id="complete-neural-network-setup" class="level3">
+<h3 class="anchored" data-anchor-id="complete-neural-network-setup">Complete Neural Network setup</h3>
+<p>GOAL</p>
+<ul>
+<li>Produce probability prediction for next character in a sequence</li>
+<li>xenc@W produces a matrix of size 5, 27 full of positive and negative values</li>
+<li>What we want ?
+<ul>
+<li>These number to represent probabilities - probabilities have special structure =&gt; +ve , add to 1</li>
+<li>These numbers can’t be counts - counts are positive - these numbers are negative</li>
+<li>We interpret output of these 27 numbers as log counts</li>
+<li>To get counts we take log counts and exponentiate them</li>
+<li>Our output <code>probs</code> comes out as probabilities
+<ul>
+<li>For every row they add to 1. ( every example in 5*27- 5 examples)</li>
+<li>We interpret these numbers as Neural Network assignment of how likely is the next character</li>
+</ul></li>
+</ul></li>
+</ul>
+<div id="cell-73" class="cell">
+<div class="sourceCode cell-code" id="cb92"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> torch.Generator().manual_seed(<span class="dv">2147483647</span>)</span>
+<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a>lr <span class="op">=</span> <span class="dv">10</span> <span class="co"># learning rate</span></span>
+<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a>W <span class="op">=</span> torch.randn((<span class="bu">len</span>(s2i), <span class="bu">len</span>(s2i)), generator<span class="op">=</span>g, requires_grad<span class="op">=</span><span class="va">True</span>) <span class="co">#Initialize Weights</span></span>
+<span id="cb92-4"><a href="#cb92-4" aria-hidden="true" tabindex="-1"></a>xs, ys <span class="op">=</span> get_bigram_data(s2i, words[:<span class="dv">1</span>], verbose<span class="op">=</span><span class="va">True</span>) <span class="co">#Get Data</span></span>
+<span id="cb92-5"><a href="#cb92-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb92-6"><a href="#cb92-6" aria-hidden="true" tabindex="-1"></a><span class="co">## Forward pass</span></span>
+<span id="cb92-7"><a href="#cb92-7" aria-hidden="true" tabindex="-1"></a>xenc <span class="op">=</span> F.one_hot(xs, num_classes<span class="op">=</span><span class="bu">len</span>(s2i)).<span class="bu">float</span>() <span class="co"># We need floats for neural nets</span></span>
+<span id="cb92-8"><a href="#cb92-8" aria-hidden="true" tabindex="-1"></a>logits <span class="op">=</span> xenc<span class="op">@</span>W <span class="co"># log-counts</span></span>
+<span id="cb92-9"><a href="#cb92-9" aria-hidden="true" tabindex="-1"></a>counts <span class="op">=</span> logits.exp() <span class="co"># equivalent N</span></span>
+<span id="cb92-10"><a href="#cb92-10" aria-hidden="true" tabindex="-1"></a>probs <span class="op">=</span> counts<span class="op">/</span> counts.<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb92-11"><a href="#cb92-11" aria-hidden="true" tabindex="-1"></a>probs[torch.arange(<span class="bu">len</span>(xs)), ys].shape, probs.shape</span>
+<span id="cb92-12"><a href="#cb92-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb92-13"><a href="#cb92-13" aria-hidden="true" tabindex="-1"></a><span class="co">## Calculate loss only for terms which are in the prediction - This can be imagined as Lookup of the prob corresponding to ys in form of table</span></span>
+<span id="cb92-14"><a href="#cb92-14" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> <span class="op">-</span>probs[torch.arange(<span class="bu">len</span>(xs)), ys].log().mean()</span>
+<span id="cb92-15"><a href="#cb92-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(loss, xenc.shape, probs.shape)</span>
+<span id="cb92-16"><a href="#cb92-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb92-17"><a href="#cb92-17" aria-hidden="true" tabindex="-1"></a><span class="co">## Backward pass</span></span>
+<span id="cb92-18"><a href="#cb92-18" aria-hidden="true" tabindex="-1"></a>W.grad <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb92-19"><a href="#cb92-19" aria-hidden="true" tabindex="-1"></a>loss.backward()</span>
+<span id="cb92-20"><a href="#cb92-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb92-21"><a href="#cb92-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Parameter Update</span></span>
+<span id="cb92-22"><a href="#cb92-22" aria-hidden="true" tabindex="-1"></a>W.data <span class="op">-=</span>lr<span class="op">*</span>W.grad</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>. e
+e m
+m m
+m a
+a .
+tensor(3.7693, grad_fn=&lt;NegBackward0&gt;) torch.Size([5, 27]) torch.Size([5, 27])</code></pre>
+</div>
+</div>
+<div id="cell-74" class="cell">
+<div class="sourceCode cell-code" id="cb94"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train(xs, ys, num_classes, epochs<span class="op">=</span><span class="dv">100</span>, lr <span class="op">=</span><span class="dv">10</span>, reg_coef<span class="op">=</span><span class="fl">0.1</span>, g <span class="op">=</span> torch.Generator().manual_seed(<span class="dv">2147483647</span>)):</span>
+<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>    W <span class="op">=</span> torch.randn((num_classes, num_classes), generator<span class="op">=</span>g, requires_grad<span class="op">=</span><span class="va">True</span>) <span class="co">#Initialize Weights</span></span>
+<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb94-4"><a href="#cb94-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(epochs):</span>
+<span id="cb94-5"><a href="#cb94-5" aria-hidden="true" tabindex="-1"></a>        xenc <span class="op">=</span> F.one_hot(xs, num_classes<span class="op">=</span>num_classes).<span class="bu">float</span>() <span class="co"># We need floats for neural nets</span></span>
+<span id="cb94-6"><a href="#cb94-6" aria-hidden="true" tabindex="-1"></a>        logits <span class="op">=</span> xenc<span class="op">@</span>W <span class="co"># log-counts</span></span>
+<span id="cb94-7"><a href="#cb94-7" aria-hidden="true" tabindex="-1"></a>        counts <span class="op">=</span> logits.exp() <span class="co"># equivalent N</span></span>
+<span id="cb94-8"><a href="#cb94-8" aria-hidden="true" tabindex="-1"></a>        probs <span class="op">=</span> counts<span class="op">/</span> counts.<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb94-9"><a href="#cb94-9" aria-hidden="true" tabindex="-1"></a>        <span class="co"># probs[torch.arange(len(xs)), ys].shape, probs.shape</span></span>
+<span id="cb94-10"><a href="#cb94-10" aria-hidden="true" tabindex="-1"></a>        loss <span class="op">=</span> <span class="op">-</span>probs[torch.arange(<span class="bu">len</span>(xs)), ys].log().mean()<span class="op">+</span> (W<span class="op">**</span><span class="dv">2</span>).mean()<span class="op">*</span>reg_coef</span>
+<span id="cb94-11"><a href="#cb94-11" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(i, loss)</span>
+<span id="cb94-12"><a href="#cb94-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb94-13"><a href="#cb94-13" aria-hidden="true" tabindex="-1"></a>        <span class="co">## Backward pass</span></span>
+<span id="cb94-14"><a href="#cb94-14" aria-hidden="true" tabindex="-1"></a>        W.grad <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb94-15"><a href="#cb94-15" aria-hidden="true" tabindex="-1"></a>        loss.backward()</span>
+<span id="cb94-16"><a href="#cb94-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb94-17"><a href="#cb94-17" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Parameter Update</span></span>
+<span id="cb94-18"><a href="#cb94-18" aria-hidden="true" tabindex="-1"></a>        W.data <span class="op">-=</span>lr<span class="op">*</span>W.grad</span>
+<span id="cb94-19"><a href="#cb94-19" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb94-20"><a href="#cb94-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> W</span>
+<span id="cb94-21"><a href="#cb94-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb94-22"><a href="#cb94-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb94-23"><a href="#cb94-23" aria-hidden="true" tabindex="-1"></a>xs, ys <span class="op">=</span> get_bigram_data(s2i, words, verbose<span class="op">=</span><span class="va">False</span>) <span class="co">#Get Data</span></span>
+<span id="cb94-24"><a href="#cb94-24" aria-hidden="true" tabindex="-1"></a>num_classes <span class="op">=</span> <span class="bu">len</span>(s2i)</span>
+<span id="cb94-25"><a href="#cb94-25" aria-hidden="true" tabindex="-1"></a>W <span class="op">=</span> train(xs, ys, num_classes, epochs<span class="op">=</span><span class="dv">500</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>0 tensor(3.8556, grad_fn=&lt;AddBackward0&gt;)
+1 tensor(3.7616, grad_fn=&lt;AddBackward0&gt;)
+2 tensor(3.6781, grad_fn=&lt;AddBackward0&gt;)
+3 tensor(3.6032, grad_fn=&lt;AddBackward0&gt;)
+4 tensor(3.5358, grad_fn=&lt;AddBackward0&gt;)
+5 tensor(3.4751, grad_fn=&lt;AddBackward0&gt;)
+6 tensor(3.4203, grad_fn=&lt;AddBackward0&gt;)
+7 tensor(3.3708, grad_fn=&lt;AddBackward0&gt;)
+8 tensor(3.3260, grad_fn=&lt;AddBackward0&gt;)
+9 tensor(3.2855, grad_fn=&lt;AddBackward0&gt;)
+10 tensor(3.2486, grad_fn=&lt;AddBackward0&gt;)
+11 tensor(3.2150, grad_fn=&lt;AddBackward0&gt;)
+12 tensor(3.1842, grad_fn=&lt;AddBackward0&gt;)
+13 tensor(3.1559, grad_fn=&lt;AddBackward0&gt;)
+14 tensor(3.1298, grad_fn=&lt;AddBackward0&gt;)
+15 tensor(3.1056, grad_fn=&lt;AddBackward0&gt;)
+16 tensor(3.0832, grad_fn=&lt;AddBackward0&gt;)
+17 tensor(3.0623, grad_fn=&lt;AddBackward0&gt;)
+18 tensor(3.0428, grad_fn=&lt;AddBackward0&gt;)
+19 tensor(3.0246, grad_fn=&lt;AddBackward0&gt;)
+20 tensor(3.0075, grad_fn=&lt;AddBackward0&gt;)
+21 tensor(2.9915, grad_fn=&lt;AddBackward0&gt;)
+22 tensor(2.9765, grad_fn=&lt;AddBackward0&gt;)
+23 tensor(2.9624, grad_fn=&lt;AddBackward0&gt;)
+24 tensor(2.9490, grad_fn=&lt;AddBackward0&gt;)
+25 tensor(2.9365, grad_fn=&lt;AddBackward0&gt;)
+26 tensor(2.9246, grad_fn=&lt;AddBackward0&gt;)
+27 tensor(2.9134, grad_fn=&lt;AddBackward0&gt;)
+28 tensor(2.9027, grad_fn=&lt;AddBackward0&gt;)
+29 tensor(2.8926, grad_fn=&lt;AddBackward0&gt;)
+30 tensor(2.8830, grad_fn=&lt;AddBackward0&gt;)
+31 tensor(2.8739, grad_fn=&lt;AddBackward0&gt;)
+32 tensor(2.8653, grad_fn=&lt;AddBackward0&gt;)
+33 tensor(2.8570, grad_fn=&lt;AddBackward0&gt;)
+34 tensor(2.8491, grad_fn=&lt;AddBackward0&gt;)
+35 tensor(2.8416, grad_fn=&lt;AddBackward0&gt;)
+36 tensor(2.8343, grad_fn=&lt;AddBackward0&gt;)
+37 tensor(2.8274, grad_fn=&lt;AddBackward0&gt;)
+38 tensor(2.8208, grad_fn=&lt;AddBackward0&gt;)
+39 tensor(2.8145, grad_fn=&lt;AddBackward0&gt;)
+40 tensor(2.8084, grad_fn=&lt;AddBackward0&gt;)
+41 tensor(2.8026, grad_fn=&lt;AddBackward0&gt;)
+42 tensor(2.7969, grad_fn=&lt;AddBackward0&gt;)
+43 tensor(2.7915, grad_fn=&lt;AddBackward0&gt;)
+44 tensor(2.7863, grad_fn=&lt;AddBackward0&gt;)
+45 tensor(2.7813, grad_fn=&lt;AddBackward0&gt;)
+46 tensor(2.7764, grad_fn=&lt;AddBackward0&gt;)
+47 tensor(2.7718, grad_fn=&lt;AddBackward0&gt;)
+48 tensor(2.7673, grad_fn=&lt;AddBackward0&gt;)
+49 tensor(2.7629, grad_fn=&lt;AddBackward0&gt;)
+50 tensor(2.7587, grad_fn=&lt;AddBackward0&gt;)
+51 tensor(2.7547, grad_fn=&lt;AddBackward0&gt;)
+52 tensor(2.7507, grad_fn=&lt;AddBackward0&gt;)
+53 tensor(2.7469, grad_fn=&lt;AddBackward0&gt;)
+54 tensor(2.7432, grad_fn=&lt;AddBackward0&gt;)
+55 tensor(2.7397, grad_fn=&lt;AddBackward0&gt;)
+56 tensor(2.7362, grad_fn=&lt;AddBackward0&gt;)
+57 tensor(2.7329, grad_fn=&lt;AddBackward0&gt;)
+58 tensor(2.7296, grad_fn=&lt;AddBackward0&gt;)
+59 tensor(2.7265, grad_fn=&lt;AddBackward0&gt;)
+60 tensor(2.7235, grad_fn=&lt;AddBackward0&gt;)
+61 tensor(2.7205, grad_fn=&lt;AddBackward0&gt;)
+62 tensor(2.7176, grad_fn=&lt;AddBackward0&gt;)
+63 tensor(2.7148, grad_fn=&lt;AddBackward0&gt;)
+64 tensor(2.7121, grad_fn=&lt;AddBackward0&gt;)
+65 tensor(2.7095, grad_fn=&lt;AddBackward0&gt;)
+66 tensor(2.7070, grad_fn=&lt;AddBackward0&gt;)
+67 tensor(2.7045, grad_fn=&lt;AddBackward0&gt;)
+68 tensor(2.7021, grad_fn=&lt;AddBackward0&gt;)
+69 tensor(2.6997, grad_fn=&lt;AddBackward0&gt;)
+70 tensor(2.6975, grad_fn=&lt;AddBackward0&gt;)
+71 tensor(2.6952, grad_fn=&lt;AddBackward0&gt;)
+72 tensor(2.6931, grad_fn=&lt;AddBackward0&gt;)
+73 tensor(2.6910, grad_fn=&lt;AddBackward0&gt;)
+74 tensor(2.6890, grad_fn=&lt;AddBackward0&gt;)
+75 tensor(2.6870, grad_fn=&lt;AddBackward0&gt;)
+76 tensor(2.6850, grad_fn=&lt;AddBackward0&gt;)
+77 tensor(2.6832, grad_fn=&lt;AddBackward0&gt;)
+78 tensor(2.6813, grad_fn=&lt;AddBackward0&gt;)
+79 tensor(2.6795, grad_fn=&lt;AddBackward0&gt;)
+80 tensor(2.6778, grad_fn=&lt;AddBackward0&gt;)
+81 tensor(2.6761, grad_fn=&lt;AddBackward0&gt;)
+82 tensor(2.6745, grad_fn=&lt;AddBackward0&gt;)
+83 tensor(2.6729, grad_fn=&lt;AddBackward0&gt;)
+84 tensor(2.6713, grad_fn=&lt;AddBackward0&gt;)
+85 tensor(2.6698, grad_fn=&lt;AddBackward0&gt;)
+86 tensor(2.6683, grad_fn=&lt;AddBackward0&gt;)
+87 tensor(2.6668, grad_fn=&lt;AddBackward0&gt;)
+88 tensor(2.6654, grad_fn=&lt;AddBackward0&gt;)
+89 tensor(2.6640, grad_fn=&lt;AddBackward0&gt;)
+90 tensor(2.6626, grad_fn=&lt;AddBackward0&gt;)
+91 tensor(2.6613, grad_fn=&lt;AddBackward0&gt;)
+92 tensor(2.6600, grad_fn=&lt;AddBackward0&gt;)
+93 tensor(2.6588, grad_fn=&lt;AddBackward0&gt;)
+94 tensor(2.6575, grad_fn=&lt;AddBackward0&gt;)
+95 tensor(2.6563, grad_fn=&lt;AddBackward0&gt;)
+96 tensor(2.6552, grad_fn=&lt;AddBackward0&gt;)
+97 tensor(2.6540, grad_fn=&lt;AddBackward0&gt;)
+98 tensor(2.6529, grad_fn=&lt;AddBackward0&gt;)
+99 tensor(2.6518, grad_fn=&lt;AddBackward0&gt;)
+100 tensor(2.6507, grad_fn=&lt;AddBackward0&gt;)
+101 tensor(2.6497, grad_fn=&lt;AddBackward0&gt;)
+102 tensor(2.6486, grad_fn=&lt;AddBackward0&gt;)
+103 tensor(2.6476, grad_fn=&lt;AddBackward0&gt;)
+104 tensor(2.6467, grad_fn=&lt;AddBackward0&gt;)
+105 tensor(2.6457, grad_fn=&lt;AddBackward0&gt;)
+106 tensor(2.6447, grad_fn=&lt;AddBackward0&gt;)
+107 tensor(2.6438, grad_fn=&lt;AddBackward0&gt;)
+108 tensor(2.6429, grad_fn=&lt;AddBackward0&gt;)
+109 tensor(2.6420, grad_fn=&lt;AddBackward0&gt;)
+110 tensor(2.6412, grad_fn=&lt;AddBackward0&gt;)
+111 tensor(2.6403, grad_fn=&lt;AddBackward0&gt;)
+112 tensor(2.6395, grad_fn=&lt;AddBackward0&gt;)
+113 tensor(2.6387, grad_fn=&lt;AddBackward0&gt;)
+114 tensor(2.6379, grad_fn=&lt;AddBackward0&gt;)
+115 tensor(2.6371, grad_fn=&lt;AddBackward0&gt;)
+116 tensor(2.6363, grad_fn=&lt;AddBackward0&gt;)
+117 tensor(2.6356, grad_fn=&lt;AddBackward0&gt;)
+118 tensor(2.6349, grad_fn=&lt;AddBackward0&gt;)
+119 tensor(2.6341, grad_fn=&lt;AddBackward0&gt;)
+120 tensor(2.6334, grad_fn=&lt;AddBackward0&gt;)
+121 tensor(2.6327, grad_fn=&lt;AddBackward0&gt;)
+122 tensor(2.6321, grad_fn=&lt;AddBackward0&gt;)
+123 tensor(2.6314, grad_fn=&lt;AddBackward0&gt;)
+124 tensor(2.6307, grad_fn=&lt;AddBackward0&gt;)
+125 tensor(2.6301, grad_fn=&lt;AddBackward0&gt;)
+126 tensor(2.6295, grad_fn=&lt;AddBackward0&gt;)
+127 tensor(2.6288, grad_fn=&lt;AddBackward0&gt;)
+128 tensor(2.6282, grad_fn=&lt;AddBackward0&gt;)
+129 tensor(2.6276, grad_fn=&lt;AddBackward0&gt;)
+130 tensor(2.6271, grad_fn=&lt;AddBackward0&gt;)
+131 tensor(2.6265, grad_fn=&lt;AddBackward0&gt;)
+132 tensor(2.6259, grad_fn=&lt;AddBackward0&gt;)
+133 tensor(2.6254, grad_fn=&lt;AddBackward0&gt;)
+134 tensor(2.6248, grad_fn=&lt;AddBackward0&gt;)
+135 tensor(2.6243, grad_fn=&lt;AddBackward0&gt;)
+136 tensor(2.6238, grad_fn=&lt;AddBackward0&gt;)
+137 tensor(2.6233, grad_fn=&lt;AddBackward0&gt;)
+138 tensor(2.6227, grad_fn=&lt;AddBackward0&gt;)
+139 tensor(2.6223, grad_fn=&lt;AddBackward0&gt;)
+140 tensor(2.6218, grad_fn=&lt;AddBackward0&gt;)
+141 tensor(2.6213, grad_fn=&lt;AddBackward0&gt;)
+142 tensor(2.6208, grad_fn=&lt;AddBackward0&gt;)
+143 tensor(2.6203, grad_fn=&lt;AddBackward0&gt;)
+144 tensor(2.6199, grad_fn=&lt;AddBackward0&gt;)
+145 tensor(2.6194, grad_fn=&lt;AddBackward0&gt;)
+146 tensor(2.6190, grad_fn=&lt;AddBackward0&gt;)
+147 tensor(2.6186, grad_fn=&lt;AddBackward0&gt;)
+148 tensor(2.6181, grad_fn=&lt;AddBackward0&gt;)
+149 tensor(2.6177, grad_fn=&lt;AddBackward0&gt;)
+150 tensor(2.6173, grad_fn=&lt;AddBackward0&gt;)
+151 tensor(2.6169, grad_fn=&lt;AddBackward0&gt;)
+152 tensor(2.6165, grad_fn=&lt;AddBackward0&gt;)
+153 tensor(2.6161, grad_fn=&lt;AddBackward0&gt;)
+154 tensor(2.6157, grad_fn=&lt;AddBackward0&gt;)
+155 tensor(2.6154, grad_fn=&lt;AddBackward0&gt;)
+156 tensor(2.6150, grad_fn=&lt;AddBackward0&gt;)
+157 tensor(2.6146, grad_fn=&lt;AddBackward0&gt;)
+158 tensor(2.6143, grad_fn=&lt;AddBackward0&gt;)
+159 tensor(2.6139, grad_fn=&lt;AddBackward0&gt;)
+160 tensor(2.6136, grad_fn=&lt;AddBackward0&gt;)
+161 tensor(2.6132, grad_fn=&lt;AddBackward0&gt;)
+162 tensor(2.6129, grad_fn=&lt;AddBackward0&gt;)
+163 tensor(2.6126, grad_fn=&lt;AddBackward0&gt;)
+164 tensor(2.6122, grad_fn=&lt;AddBackward0&gt;)
+165 tensor(2.6119, grad_fn=&lt;AddBackward0&gt;)
+166 tensor(2.6116, grad_fn=&lt;AddBackward0&gt;)
+167 tensor(2.6113, grad_fn=&lt;AddBackward0&gt;)
+168 tensor(2.6110, grad_fn=&lt;AddBackward0&gt;)
+169 tensor(2.6107, grad_fn=&lt;AddBackward0&gt;)
+170 tensor(2.6104, grad_fn=&lt;AddBackward0&gt;)
+171 tensor(2.6101, grad_fn=&lt;AddBackward0&gt;)
+172 tensor(2.6098, grad_fn=&lt;AddBackward0&gt;)
+173 tensor(2.6095, grad_fn=&lt;AddBackward0&gt;)
+174 tensor(2.6092, grad_fn=&lt;AddBackward0&gt;)
+175 tensor(2.6089, grad_fn=&lt;AddBackward0&gt;)
+176 tensor(2.6087, grad_fn=&lt;AddBackward0&gt;)
+177 tensor(2.6084, grad_fn=&lt;AddBackward0&gt;)
+178 tensor(2.6081, grad_fn=&lt;AddBackward0&gt;)
+179 tensor(2.6079, grad_fn=&lt;AddBackward0&gt;)
+180 tensor(2.6076, grad_fn=&lt;AddBackward0&gt;)
+181 tensor(2.6074, grad_fn=&lt;AddBackward0&gt;)
+182 tensor(2.6071, grad_fn=&lt;AddBackward0&gt;)
+183 tensor(2.6069, grad_fn=&lt;AddBackward0&gt;)
+184 tensor(2.6066, grad_fn=&lt;AddBackward0&gt;)
+185 tensor(2.6064, grad_fn=&lt;AddBackward0&gt;)
+186 tensor(2.6062, grad_fn=&lt;AddBackward0&gt;)
+187 tensor(2.6059, grad_fn=&lt;AddBackward0&gt;)
+188 tensor(2.6057, grad_fn=&lt;AddBackward0&gt;)
+189 tensor(2.6055, grad_fn=&lt;AddBackward0&gt;)
+190 tensor(2.6053, grad_fn=&lt;AddBackward0&gt;)
+191 tensor(2.6051, grad_fn=&lt;AddBackward0&gt;)
+192 tensor(2.6048, grad_fn=&lt;AddBackward0&gt;)
+193 tensor(2.6046, grad_fn=&lt;AddBackward0&gt;)
+194 tensor(2.6044, grad_fn=&lt;AddBackward0&gt;)
+195 tensor(2.6042, grad_fn=&lt;AddBackward0&gt;)
+196 tensor(2.6040, grad_fn=&lt;AddBackward0&gt;)
+197 tensor(2.6038, grad_fn=&lt;AddBackward0&gt;)
+198 tensor(2.6036, grad_fn=&lt;AddBackward0&gt;)
+199 tensor(2.6034, grad_fn=&lt;AddBackward0&gt;)
+200 tensor(2.6032, grad_fn=&lt;AddBackward0&gt;)
+201 tensor(2.6030, grad_fn=&lt;AddBackward0&gt;)
+202 tensor(2.6029, grad_fn=&lt;AddBackward0&gt;)
+203 tensor(2.6027, grad_fn=&lt;AddBackward0&gt;)
+204 tensor(2.6025, grad_fn=&lt;AddBackward0&gt;)
+205 tensor(2.6023, grad_fn=&lt;AddBackward0&gt;)
+206 tensor(2.6021, grad_fn=&lt;AddBackward0&gt;)
+207 tensor(2.6020, grad_fn=&lt;AddBackward0&gt;)
+208 tensor(2.6018, grad_fn=&lt;AddBackward0&gt;)
+209 tensor(2.6016, grad_fn=&lt;AddBackward0&gt;)
+210 tensor(2.6015, grad_fn=&lt;AddBackward0&gt;)
+211 tensor(2.6013, grad_fn=&lt;AddBackward0&gt;)
+212 tensor(2.6011, grad_fn=&lt;AddBackward0&gt;)
+213 tensor(2.6010, grad_fn=&lt;AddBackward0&gt;)
+214 tensor(2.6008, grad_fn=&lt;AddBackward0&gt;)
+215 tensor(2.6007, grad_fn=&lt;AddBackward0&gt;)
+216 tensor(2.6005, grad_fn=&lt;AddBackward0&gt;)
+217 tensor(2.6003, grad_fn=&lt;AddBackward0&gt;)
+218 tensor(2.6002, grad_fn=&lt;AddBackward0&gt;)
+219 tensor(2.6001, grad_fn=&lt;AddBackward0&gt;)
+220 tensor(2.5999, grad_fn=&lt;AddBackward0&gt;)
+221 tensor(2.5998, grad_fn=&lt;AddBackward0&gt;)
+222 tensor(2.5996, grad_fn=&lt;AddBackward0&gt;)
+223 tensor(2.5995, grad_fn=&lt;AddBackward0&gt;)
+224 tensor(2.5993, grad_fn=&lt;AddBackward0&gt;)
+225 tensor(2.5992, grad_fn=&lt;AddBackward0&gt;)
+226 tensor(2.5991, grad_fn=&lt;AddBackward0&gt;)
+227 tensor(2.5989, grad_fn=&lt;AddBackward0&gt;)
+228 tensor(2.5988, grad_fn=&lt;AddBackward0&gt;)
+229 tensor(2.5987, grad_fn=&lt;AddBackward0&gt;)
+230 tensor(2.5985, grad_fn=&lt;AddBackward0&gt;)
+231 tensor(2.5984, grad_fn=&lt;AddBackward0&gt;)
+232 tensor(2.5983, grad_fn=&lt;AddBackward0&gt;)
+233 tensor(2.5982, grad_fn=&lt;AddBackward0&gt;)
+234 tensor(2.5980, grad_fn=&lt;AddBackward0&gt;)
+235 tensor(2.5979, grad_fn=&lt;AddBackward0&gt;)
+236 tensor(2.5978, grad_fn=&lt;AddBackward0&gt;)
+237 tensor(2.5977, grad_fn=&lt;AddBackward0&gt;)
+238 tensor(2.5976, grad_fn=&lt;AddBackward0&gt;)
+239 tensor(2.5975, grad_fn=&lt;AddBackward0&gt;)
+240 tensor(2.5974, grad_fn=&lt;AddBackward0&gt;)
+241 tensor(2.5972, grad_fn=&lt;AddBackward0&gt;)
+242 tensor(2.5971, grad_fn=&lt;AddBackward0&gt;)
+243 tensor(2.5970, grad_fn=&lt;AddBackward0&gt;)
+244 tensor(2.5969, grad_fn=&lt;AddBackward0&gt;)
+245 tensor(2.5968, grad_fn=&lt;AddBackward0&gt;)
+246 tensor(2.5967, grad_fn=&lt;AddBackward0&gt;)
+247 tensor(2.5966, grad_fn=&lt;AddBackward0&gt;)
+248 tensor(2.5965, grad_fn=&lt;AddBackward0&gt;)
+249 tensor(2.5964, grad_fn=&lt;AddBackward0&gt;)
+250 tensor(2.5963, grad_fn=&lt;AddBackward0&gt;)
+251 tensor(2.5962, grad_fn=&lt;AddBackward0&gt;)
+252 tensor(2.5961, grad_fn=&lt;AddBackward0&gt;)
+253 tensor(2.5960, grad_fn=&lt;AddBackward0&gt;)
+254 tensor(2.5959, grad_fn=&lt;AddBackward0&gt;)
+255 tensor(2.5958, grad_fn=&lt;AddBackward0&gt;)
+256 tensor(2.5957, grad_fn=&lt;AddBackward0&gt;)
+257 tensor(2.5956, grad_fn=&lt;AddBackward0&gt;)
+258 tensor(2.5955, grad_fn=&lt;AddBackward0&gt;)
+259 tensor(2.5954, grad_fn=&lt;AddBackward0&gt;)
+260 tensor(2.5954, grad_fn=&lt;AddBackward0&gt;)
+261 tensor(2.5953, grad_fn=&lt;AddBackward0&gt;)
+262 tensor(2.5952, grad_fn=&lt;AddBackward0&gt;)
+263 tensor(2.5951, grad_fn=&lt;AddBackward0&gt;)
+264 tensor(2.5950, grad_fn=&lt;AddBackward0&gt;)
+265 tensor(2.5949, grad_fn=&lt;AddBackward0&gt;)
+266 tensor(2.5948, grad_fn=&lt;AddBackward0&gt;)
+267 tensor(2.5948, grad_fn=&lt;AddBackward0&gt;)
+268 tensor(2.5947, grad_fn=&lt;AddBackward0&gt;)
+269 tensor(2.5946, grad_fn=&lt;AddBackward0&gt;)
+270 tensor(2.5945, grad_fn=&lt;AddBackward0&gt;)
+271 tensor(2.5944, grad_fn=&lt;AddBackward0&gt;)
+272 tensor(2.5944, grad_fn=&lt;AddBackward0&gt;)
+273 tensor(2.5943, grad_fn=&lt;AddBackward0&gt;)
+274 tensor(2.5942, grad_fn=&lt;AddBackward0&gt;)
+275 tensor(2.5941, grad_fn=&lt;AddBackward0&gt;)
+276 tensor(2.5941, grad_fn=&lt;AddBackward0&gt;)
+277 tensor(2.5940, grad_fn=&lt;AddBackward0&gt;)
+278 tensor(2.5939, grad_fn=&lt;AddBackward0&gt;)
+279 tensor(2.5939, grad_fn=&lt;AddBackward0&gt;)
+280 tensor(2.5938, grad_fn=&lt;AddBackward0&gt;)
+281 tensor(2.5937, grad_fn=&lt;AddBackward0&gt;)
+282 tensor(2.5936, grad_fn=&lt;AddBackward0&gt;)
+283 tensor(2.5936, grad_fn=&lt;AddBackward0&gt;)
+284 tensor(2.5935, grad_fn=&lt;AddBackward0&gt;)
+285 tensor(2.5934, grad_fn=&lt;AddBackward0&gt;)
+286 tensor(2.5934, grad_fn=&lt;AddBackward0&gt;)
+287 tensor(2.5933, grad_fn=&lt;AddBackward0&gt;)
+288 tensor(2.5932, grad_fn=&lt;AddBackward0&gt;)
+289 tensor(2.5932, grad_fn=&lt;AddBackward0&gt;)
+290 tensor(2.5931, grad_fn=&lt;AddBackward0&gt;)
+291 tensor(2.5931, grad_fn=&lt;AddBackward0&gt;)
+292 tensor(2.5930, grad_fn=&lt;AddBackward0&gt;)
+293 tensor(2.5929, grad_fn=&lt;AddBackward0&gt;)
+294 tensor(2.5929, grad_fn=&lt;AddBackward0&gt;)
+295 tensor(2.5928, grad_fn=&lt;AddBackward0&gt;)
+296 tensor(2.5928, grad_fn=&lt;AddBackward0&gt;)
+297 tensor(2.5927, grad_fn=&lt;AddBackward0&gt;)
+298 tensor(2.5926, grad_fn=&lt;AddBackward0&gt;)
+299 tensor(2.5926, grad_fn=&lt;AddBackward0&gt;)
+300 tensor(2.5925, grad_fn=&lt;AddBackward0&gt;)
+301 tensor(2.5925, grad_fn=&lt;AddBackward0&gt;)
+302 tensor(2.5924, grad_fn=&lt;AddBackward0&gt;)
+303 tensor(2.5924, grad_fn=&lt;AddBackward0&gt;)
+304 tensor(2.5923, grad_fn=&lt;AddBackward0&gt;)
+305 tensor(2.5922, grad_fn=&lt;AddBackward0&gt;)
+306 tensor(2.5922, grad_fn=&lt;AddBackward0&gt;)
+307 tensor(2.5921, grad_fn=&lt;AddBackward0&gt;)
+308 tensor(2.5921, grad_fn=&lt;AddBackward0&gt;)
+309 tensor(2.5920, grad_fn=&lt;AddBackward0&gt;)
+310 tensor(2.5920, grad_fn=&lt;AddBackward0&gt;)
+311 tensor(2.5919, grad_fn=&lt;AddBackward0&gt;)
+312 tensor(2.5919, grad_fn=&lt;AddBackward0&gt;)
+313 tensor(2.5918, grad_fn=&lt;AddBackward0&gt;)
+314 tensor(2.5918, grad_fn=&lt;AddBackward0&gt;)
+315 tensor(2.5917, grad_fn=&lt;AddBackward0&gt;)
+316 tensor(2.5917, grad_fn=&lt;AddBackward0&gt;)
+317 tensor(2.5916, grad_fn=&lt;AddBackward0&gt;)
+318 tensor(2.5916, grad_fn=&lt;AddBackward0&gt;)
+319 tensor(2.5916, grad_fn=&lt;AddBackward0&gt;)
+320 tensor(2.5915, grad_fn=&lt;AddBackward0&gt;)
+321 tensor(2.5915, grad_fn=&lt;AddBackward0&gt;)
+322 tensor(2.5914, grad_fn=&lt;AddBackward0&gt;)
+323 tensor(2.5914, grad_fn=&lt;AddBackward0&gt;)
+324 tensor(2.5913, grad_fn=&lt;AddBackward0&gt;)
+325 tensor(2.5913, grad_fn=&lt;AddBackward0&gt;)
+326 tensor(2.5912, grad_fn=&lt;AddBackward0&gt;)
+327 tensor(2.5912, grad_fn=&lt;AddBackward0&gt;)
+328 tensor(2.5912, grad_fn=&lt;AddBackward0&gt;)
+329 tensor(2.5911, grad_fn=&lt;AddBackward0&gt;)
+330 tensor(2.5911, grad_fn=&lt;AddBackward0&gt;)
+331 tensor(2.5910, grad_fn=&lt;AddBackward0&gt;)
+332 tensor(2.5910, grad_fn=&lt;AddBackward0&gt;)
+333 tensor(2.5909, grad_fn=&lt;AddBackward0&gt;)
+334 tensor(2.5909, grad_fn=&lt;AddBackward0&gt;)
+335 tensor(2.5909, grad_fn=&lt;AddBackward0&gt;)
+336 tensor(2.5908, grad_fn=&lt;AddBackward0&gt;)
+337 tensor(2.5908, grad_fn=&lt;AddBackward0&gt;)
+338 tensor(2.5908, grad_fn=&lt;AddBackward0&gt;)
+339 tensor(2.5907, grad_fn=&lt;AddBackward0&gt;)
+340 tensor(2.5907, grad_fn=&lt;AddBackward0&gt;)
+341 tensor(2.5906, grad_fn=&lt;AddBackward0&gt;)
+342 tensor(2.5906, grad_fn=&lt;AddBackward0&gt;)
+343 tensor(2.5906, grad_fn=&lt;AddBackward0&gt;)
+344 tensor(2.5905, grad_fn=&lt;AddBackward0&gt;)
+345 tensor(2.5905, grad_fn=&lt;AddBackward0&gt;)
+346 tensor(2.5905, grad_fn=&lt;AddBackward0&gt;)
+347 tensor(2.5904, grad_fn=&lt;AddBackward0&gt;)
+348 tensor(2.5904, grad_fn=&lt;AddBackward0&gt;)
+349 tensor(2.5904, grad_fn=&lt;AddBackward0&gt;)
+350 tensor(2.5903, grad_fn=&lt;AddBackward0&gt;)
+351 tensor(2.5903, grad_fn=&lt;AddBackward0&gt;)
+352 tensor(2.5903, grad_fn=&lt;AddBackward0&gt;)
+353 tensor(2.5902, grad_fn=&lt;AddBackward0&gt;)
+354 tensor(2.5902, grad_fn=&lt;AddBackward0&gt;)
+355 tensor(2.5902, grad_fn=&lt;AddBackward0&gt;)
+356 tensor(2.5901, grad_fn=&lt;AddBackward0&gt;)
+357 tensor(2.5901, grad_fn=&lt;AddBackward0&gt;)
+358 tensor(2.5901, grad_fn=&lt;AddBackward0&gt;)
+359 tensor(2.5900, grad_fn=&lt;AddBackward0&gt;)
+360 tensor(2.5900, grad_fn=&lt;AddBackward0&gt;)
+361 tensor(2.5900, grad_fn=&lt;AddBackward0&gt;)
+362 tensor(2.5899, grad_fn=&lt;AddBackward0&gt;)
+363 tensor(2.5899, grad_fn=&lt;AddBackward0&gt;)
+364 tensor(2.5899, grad_fn=&lt;AddBackward0&gt;)
+365 tensor(2.5898, grad_fn=&lt;AddBackward0&gt;)
+366 tensor(2.5898, grad_fn=&lt;AddBackward0&gt;)
+367 tensor(2.5898, grad_fn=&lt;AddBackward0&gt;)
+368 tensor(2.5898, grad_fn=&lt;AddBackward0&gt;)
+369 tensor(2.5897, grad_fn=&lt;AddBackward0&gt;)
+370 tensor(2.5897, grad_fn=&lt;AddBackward0&gt;)
+371 tensor(2.5897, grad_fn=&lt;AddBackward0&gt;)
+372 tensor(2.5897, grad_fn=&lt;AddBackward0&gt;)
+373 tensor(2.5896, grad_fn=&lt;AddBackward0&gt;)
+374 tensor(2.5896, grad_fn=&lt;AddBackward0&gt;)
+375 tensor(2.5896, grad_fn=&lt;AddBackward0&gt;)
+376 tensor(2.5895, grad_fn=&lt;AddBackward0&gt;)
+377 tensor(2.5895, grad_fn=&lt;AddBackward0&gt;)
+378 tensor(2.5895, grad_fn=&lt;AddBackward0&gt;)
+379 tensor(2.5895, grad_fn=&lt;AddBackward0&gt;)
+380 tensor(2.5894, grad_fn=&lt;AddBackward0&gt;)
+381 tensor(2.5894, grad_fn=&lt;AddBackward0&gt;)
+382 tensor(2.5894, grad_fn=&lt;AddBackward0&gt;)
+383 tensor(2.5894, grad_fn=&lt;AddBackward0&gt;)
+384 tensor(2.5893, grad_fn=&lt;AddBackward0&gt;)
+385 tensor(2.5893, grad_fn=&lt;AddBackward0&gt;)
+386 tensor(2.5893, grad_fn=&lt;AddBackward0&gt;)
+387 tensor(2.5893, grad_fn=&lt;AddBackward0&gt;)
+388 tensor(2.5892, grad_fn=&lt;AddBackward0&gt;)
+389 tensor(2.5892, grad_fn=&lt;AddBackward0&gt;)
+390 tensor(2.5892, grad_fn=&lt;AddBackward0&gt;)
+391 tensor(2.5892, grad_fn=&lt;AddBackward0&gt;)
+392 tensor(2.5891, grad_fn=&lt;AddBackward0&gt;)
+393 tensor(2.5891, grad_fn=&lt;AddBackward0&gt;)
+394 tensor(2.5891, grad_fn=&lt;AddBackward0&gt;)
+395 tensor(2.5891, grad_fn=&lt;AddBackward0&gt;)
+396 tensor(2.5891, grad_fn=&lt;AddBackward0&gt;)
+397 tensor(2.5890, grad_fn=&lt;AddBackward0&gt;)
+398 tensor(2.5890, grad_fn=&lt;AddBackward0&gt;)
+399 tensor(2.5890, grad_fn=&lt;AddBackward0&gt;)
+400 tensor(2.5890, grad_fn=&lt;AddBackward0&gt;)
+401 tensor(2.5890, grad_fn=&lt;AddBackward0&gt;)
+402 tensor(2.5889, grad_fn=&lt;AddBackward0&gt;)
+403 tensor(2.5889, grad_fn=&lt;AddBackward0&gt;)
+404 tensor(2.5889, grad_fn=&lt;AddBackward0&gt;)
+405 tensor(2.5889, grad_fn=&lt;AddBackward0&gt;)
+406 tensor(2.5889, grad_fn=&lt;AddBackward0&gt;)
+407 tensor(2.5888, grad_fn=&lt;AddBackward0&gt;)
+408 tensor(2.5888, grad_fn=&lt;AddBackward0&gt;)
+409 tensor(2.5888, grad_fn=&lt;AddBackward0&gt;)
+410 tensor(2.5888, grad_fn=&lt;AddBackward0&gt;)
+411 tensor(2.5888, grad_fn=&lt;AddBackward0&gt;)
+412 tensor(2.5887, grad_fn=&lt;AddBackward0&gt;)
+413 tensor(2.5887, grad_fn=&lt;AddBackward0&gt;)
+414 tensor(2.5887, grad_fn=&lt;AddBackward0&gt;)
+415 tensor(2.5887, grad_fn=&lt;AddBackward0&gt;)
+416 tensor(2.5887, grad_fn=&lt;AddBackward0&gt;)
+417 tensor(2.5886, grad_fn=&lt;AddBackward0&gt;)
+418 tensor(2.5886, grad_fn=&lt;AddBackward0&gt;)
+419 tensor(2.5886, grad_fn=&lt;AddBackward0&gt;)
+420 tensor(2.5886, grad_fn=&lt;AddBackward0&gt;)
+421 tensor(2.5886, grad_fn=&lt;AddBackward0&gt;)
+422 tensor(2.5886, grad_fn=&lt;AddBackward0&gt;)
+423 tensor(2.5885, grad_fn=&lt;AddBackward0&gt;)
+424 tensor(2.5885, grad_fn=&lt;AddBackward0&gt;)
+425 tensor(2.5885, grad_fn=&lt;AddBackward0&gt;)
+426 tensor(2.5885, grad_fn=&lt;AddBackward0&gt;)
+427 tensor(2.5885, grad_fn=&lt;AddBackward0&gt;)
+428 tensor(2.5885, grad_fn=&lt;AddBackward0&gt;)
+429 tensor(2.5884, grad_fn=&lt;AddBackward0&gt;)
+430 tensor(2.5884, grad_fn=&lt;AddBackward0&gt;)
+431 tensor(2.5884, grad_fn=&lt;AddBackward0&gt;)
+432 tensor(2.5884, grad_fn=&lt;AddBackward0&gt;)
+433 tensor(2.5884, grad_fn=&lt;AddBackward0&gt;)
+434 tensor(2.5884, grad_fn=&lt;AddBackward0&gt;)
+435 tensor(2.5883, grad_fn=&lt;AddBackward0&gt;)
+436 tensor(2.5883, grad_fn=&lt;AddBackward0&gt;)
+437 tensor(2.5883, grad_fn=&lt;AddBackward0&gt;)
+438 tensor(2.5883, grad_fn=&lt;AddBackward0&gt;)
+439 tensor(2.5883, grad_fn=&lt;AddBackward0&gt;)
+440 tensor(2.5883, grad_fn=&lt;AddBackward0&gt;)
+441 tensor(2.5882, grad_fn=&lt;AddBackward0&gt;)
+442 tensor(2.5882, grad_fn=&lt;AddBackward0&gt;)
+443 tensor(2.5882, grad_fn=&lt;AddBackward0&gt;)
+444 tensor(2.5882, grad_fn=&lt;AddBackward0&gt;)
+445 tensor(2.5882, grad_fn=&lt;AddBackward0&gt;)
+446 tensor(2.5882, grad_fn=&lt;AddBackward0&gt;)
+447 tensor(2.5882, grad_fn=&lt;AddBackward0&gt;)
+448 tensor(2.5881, grad_fn=&lt;AddBackward0&gt;)
+449 tensor(2.5881, grad_fn=&lt;AddBackward0&gt;)
+450 tensor(2.5881, grad_fn=&lt;AddBackward0&gt;)
+451 tensor(2.5881, grad_fn=&lt;AddBackward0&gt;)
+452 tensor(2.5881, grad_fn=&lt;AddBackward0&gt;)
+453 tensor(2.5881, grad_fn=&lt;AddBackward0&gt;)
+454 tensor(2.5881, grad_fn=&lt;AddBackward0&gt;)
+455 tensor(2.5881, grad_fn=&lt;AddBackward0&gt;)
+456 tensor(2.5880, grad_fn=&lt;AddBackward0&gt;)
+457 tensor(2.5880, grad_fn=&lt;AddBackward0&gt;)
+458 tensor(2.5880, grad_fn=&lt;AddBackward0&gt;)
+459 tensor(2.5880, grad_fn=&lt;AddBackward0&gt;)
+460 tensor(2.5880, grad_fn=&lt;AddBackward0&gt;)
+461 tensor(2.5880, grad_fn=&lt;AddBackward0&gt;)
+462 tensor(2.5880, grad_fn=&lt;AddBackward0&gt;)
+463 tensor(2.5880, grad_fn=&lt;AddBackward0&gt;)
+464 tensor(2.5879, grad_fn=&lt;AddBackward0&gt;)
+465 tensor(2.5879, grad_fn=&lt;AddBackward0&gt;)
+466 tensor(2.5879, grad_fn=&lt;AddBackward0&gt;)
+467 tensor(2.5879, grad_fn=&lt;AddBackward0&gt;)
+468 tensor(2.5879, grad_fn=&lt;AddBackward0&gt;)
+469 tensor(2.5879, grad_fn=&lt;AddBackward0&gt;)
+470 tensor(2.5879, grad_fn=&lt;AddBackward0&gt;)
+471 tensor(2.5879, grad_fn=&lt;AddBackward0&gt;)
+472 tensor(2.5878, grad_fn=&lt;AddBackward0&gt;)
+473 tensor(2.5878, grad_fn=&lt;AddBackward0&gt;)
+474 tensor(2.5878, grad_fn=&lt;AddBackward0&gt;)
+475 tensor(2.5878, grad_fn=&lt;AddBackward0&gt;)
+476 tensor(2.5878, grad_fn=&lt;AddBackward0&gt;)
+477 tensor(2.5878, grad_fn=&lt;AddBackward0&gt;)
+478 tensor(2.5878, grad_fn=&lt;AddBackward0&gt;)
+479 tensor(2.5878, grad_fn=&lt;AddBackward0&gt;)
+480 tensor(2.5878, grad_fn=&lt;AddBackward0&gt;)
+481 tensor(2.5877, grad_fn=&lt;AddBackward0&gt;)
+482 tensor(2.5877, grad_fn=&lt;AddBackward0&gt;)
+483 tensor(2.5877, grad_fn=&lt;AddBackward0&gt;)
+484 tensor(2.5877, grad_fn=&lt;AddBackward0&gt;)
+485 tensor(2.5877, grad_fn=&lt;AddBackward0&gt;)
+486 tensor(2.5877, grad_fn=&lt;AddBackward0&gt;)
+487 tensor(2.5877, grad_fn=&lt;AddBackward0&gt;)
+488 tensor(2.5877, grad_fn=&lt;AddBackward0&gt;)
+489 tensor(2.5877, grad_fn=&lt;AddBackward0&gt;)
+490 tensor(2.5877, grad_fn=&lt;AddBackward0&gt;)
+491 tensor(2.5876, grad_fn=&lt;AddBackward0&gt;)
+492 tensor(2.5876, grad_fn=&lt;AddBackward0&gt;)
+493 tensor(2.5876, grad_fn=&lt;AddBackward0&gt;)
+494 tensor(2.5876, grad_fn=&lt;AddBackward0&gt;)
+495 tensor(2.5876, grad_fn=&lt;AddBackward0&gt;)
+496 tensor(2.5876, grad_fn=&lt;AddBackward0&gt;)
+497 tensor(2.5876, grad_fn=&lt;AddBackward0&gt;)
+498 tensor(2.5876, grad_fn=&lt;AddBackward0&gt;)
+499 tensor(2.5876, grad_fn=&lt;AddBackward0&gt;)</code></pre>
+</div>
+</div>
+<div id="cell-75" class="cell">
+<div class="sourceCode cell-code" id="cb96"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a>gen_word_prob(P_bigram_smooth, i2s, n_samples<span class="op">=</span><span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>['aice', 'jen', 'br', 'miguia', 'detz']</code></pre>
+</div>
+</div>
+<div id="cell-76" class="cell">
+<div class="sourceCode cell-code" id="cb98"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gen_word_nn(W, i2s, n_samples<span class="op">=</span><span class="dv">20</span>, g<span class="op">=</span>torch.Generator().manual_seed(<span class="dv">2147483647</span>)):</span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a>    gen_words <span class="op">=</span> []</span>
+<span id="cb98-3"><a href="#cb98-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_samples):</span>
+<span id="cb98-4"><a href="#cb98-4" aria-hidden="true" tabindex="-1"></a>        ix <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb98-5"><a href="#cb98-5" aria-hidden="true" tabindex="-1"></a>        gen_word <span class="op">=</span> <span class="st">""</span></span>
+<span id="cb98-6"><a href="#cb98-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb98-7"><a href="#cb98-7" aria-hidden="true" tabindex="-1"></a>            xenc <span class="op">=</span> F.one_hot(torch.tensor([ix]), num_classes<span class="op">=</span><span class="bu">len</span>(i2s)).<span class="bu">float</span>() <span class="co"># We need floats for neural nets</span></span>
+<span id="cb98-8"><a href="#cb98-8" aria-hidden="true" tabindex="-1"></a>            logits <span class="op">=</span> xenc<span class="op">@</span>W <span class="co"># log-counts</span></span>
+<span id="cb98-9"><a href="#cb98-9" aria-hidden="true" tabindex="-1"></a>            counts <span class="op">=</span> logits.exp() <span class="co"># equivalent N</span></span>
+<span id="cb98-10"><a href="#cb98-10" aria-hidden="true" tabindex="-1"></a>            probs <span class="op">=</span> counts<span class="op">/</span> counts.<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb98-11"><a href="#cb98-11" aria-hidden="true" tabindex="-1"></a>            ix <span class="op">=</span> torch.multinomial(probs, num_samples<span class="op">=</span><span class="dv">1</span>, replacement<span class="op">=</span><span class="va">True</span>, generator<span class="op">=</span>g).item()</span>
+<span id="cb98-12"><a href="#cb98-12" aria-hidden="true" tabindex="-1"></a>            <span class="co"># print(i2s[ix])</span></span>
+<span id="cb98-13"><a href="#cb98-13" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> ix <span class="op">==</span> <span class="dv">0</span>: <span class="cf">break</span></span>
+<span id="cb98-14"><a href="#cb98-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:gen_word <span class="op">=</span>  gen_word <span class="op">+</span> i2s[ix]</span>
+<span id="cb98-15"><a href="#cb98-15" aria-hidden="true" tabindex="-1"></a>        gen_words.append(gen_word)</span>
+<span id="cb98-16"><a href="#cb98-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gen_words</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-77" class="cell">
+<div class="sourceCode cell-code" id="cb99"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a>gen_word_nn(W, i2s, n_samples<span class="op">=</span><span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>['cexze', 'momakurailezityha', 'konimittain', 'llayn', 'ka']</code></pre>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/Rahuketu86\.github\.io\/minion");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/Rahuketu86/minion/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
